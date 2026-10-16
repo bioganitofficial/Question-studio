@@ -1797,7 +1797,7 @@
         });
     }
 
-    /* REFERENCE LAYOUT MATCHED CANVAS GENERATOR (UPDATED: SOLID BLANK BACKGROUND OPTION) */
+    /* REFERENCE LAYOUT MATCHED CANVAS GENERATOR */
     async function generate169Canvas(index) {
         const q = questionsArr[index];
         const container = document.getElementById('hd-export-container');
@@ -2333,13 +2333,44 @@
         downloadImageFromUrl(canvas.toDataURL('image/png'), index);
     }
 
-    function downloadImageFromUrl(dataUrl, index) {
+    /* UPDATED: FULL SUPPORT FOR IPHONE / MOBILE SAFARI WEB SHARE & BLOB DOWNLOAD */
+    async function downloadImageFromUrl(dataUrl, index) {
         const q = questionsArr[index];
         const displayNum = q.customNum ? q.customNum : `${index + 1})`;
-        const link = document.createElement('a');
-        link.download = `Question_${displayNum.replace(/[^a-zA-Z0-9]/g, '_')}_1920x1080.png`;
-        link.href = dataUrl;
-        link.click();
+        const fileName = `Question_${displayNum.replace(/[^a-zA-Z0-9]/g, '_')}_1920x1080.png`;
+
+        try {
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+            const file = new File([blob], fileName, { type: 'image/png' });
+
+            // iOS / Mobile Web Share API: Opens Native Share Sheet to "Save Image" to Photos
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: fileName,
+                });
+                return;
+            }
+
+            // Standard PC / Android Blob Download
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        } catch (err) {
+            // Fallback for browsers that block download: Opens image in new tab for manual long-press saving
+            const newTab = window.open();
+            if (newTab) {
+                newTab.document.write(`<title>${fileName}</title><img src="${dataUrl}" style="max-width:100%; height:auto;" alt="Long press to save">`);
+            } else {
+                window.location.href = dataUrl;
+            }
+        }
     }
 </script>
 
