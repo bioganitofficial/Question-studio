@@ -11,6 +11,8 @@
     <meta name="apple-mobile-web-app-title" content="Question Studio">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#1e293b">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" type="image/png" href="icon.png">
     
     <!-- Google Fonts for Gujarati and English -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -185,7 +187,6 @@
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .grid-3-custom { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
 
-        /* COLOR PICKER WITH HEX INPUT CONTROL GROUP */
         .color-control-group {
             display: flex;
             gap: 6px;
@@ -231,6 +232,7 @@
         .btn-red { background-color: #dc2626; }
         .btn-blue { background-color: #2563eb; }
         .btn-purple { background-color: #7c3aed; }
+        .btn-teal { background-color: #0d9488; }
         .btn-slate { background-color: #475569; }
         .btn-sm { padding: 3px 6px; font-size: 11px; }
 
@@ -253,7 +255,6 @@
             margin-bottom: 4px;
         }
 
-        /* COMPACT MATCH THE FOLLOWING ROWS */
         .match-row-compact {
             display: grid;
             grid-template-columns: 44fr 56fr;
@@ -351,7 +352,6 @@
             justify-content: flex-start;
         }
 
-        /* DYNAMIC MATCH TABLE WITH PURE BOLD (700) */
         .export-match-table {
             border-collapse: collapse;
             margin: 15px 0 20px 0;
@@ -493,7 +493,7 @@
         .modal-img { max-width: 100%; max-height: 72vh; object-fit: contain; }
         .pdf-frame { width: 100%; height: 72vh; border: 1px solid #ccc; border-radius: 4px; }
 
-        /* ==================== MOBILE & IPHONE PORTRAIT RESPONSIVE CSS ==================== */
+        /* MOBILE & IPHONE PORTRAIT RESPONSIVE CSS */
         @media (max-width: 900px) {
             body {
                 height: auto;
@@ -580,6 +580,9 @@
         <button class="btn btn-slate btn-sm" onclick="openModal('pngSettingsModal')" title="Open 16:9 Colors, BG & Fonts (Press F4)">
             <span class="f-key-badge">F4</span> 🎨 16:9 Colors, BG & Fonts
         </button>
+        <button class="btn btn-teal btn-sm" onclick="openModal('apiKeyModal')" title="Set Google Gemini API Key (Press F6)">
+            <span class="f-key-badge">F6</span> 🔑 AI Key
+        </button>
     </div>
 
     <div class="nav-actions">
@@ -597,7 +600,10 @@
     <div class="column-card">
         <div class="panel-header">
             <h3 id="formTitle">✏️ પ્રશ્ન ઉમેરો / એડિટ કરો</h3>
-            <div style="display:flex; gap:6px;">
+            <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                <button class="btn btn-teal btn-sm" id="aiTranslateBtn" onclick="translateCurrentQuestionWithAI()" title="Translate English Question & Options to NCERT Biology Gujarati">
+                    ⚡ AI Translate (NCERT Guj)
+                </button>
                 <button class="btn btn-green btn-sm" id="saveBtn" onclick="saveQuestion()">💾 સેવ કરો</button>
                 <button class="btn btn-red btn-sm" id="cancelEditBtn" style="display:none;" onclick="cancelEdit()">❌ કેન્સલ</button>
             </div>
@@ -628,8 +634,8 @@
             </div>
 
             <div class="form-group">
-                <label>પ્રશ્નનું લખાણ (Question Text)</label>
-                <textarea id="qText" rows="2" placeholder="પ્રશ્ન અથવા નોંધ ટાઈપ કરો..."></textarea>
+                <label>પ્રશ્નનું લખાણ (Question Text - English or Gujarati)</label>
+                <textarea id="qText" rows="2" placeholder="પ્રશ્ન અથવા નોંધ ટાઈપ કરો... (English ma type kari AI Translate dabavo)"></textarea>
             </div>
 
             <div class="form-group" id="mainImgContainer">
@@ -665,6 +671,31 @@
         </div>
 
         <div class="panel-scrollable-body" id="questionsList"></div>
+    </div>
+</div>
+
+<!-- POPUP MODAL: GEMINI API KEY SETTINGS (F6) -->
+<div id="apiKeyModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>🔑 Google Gemini API Settings <span class="badge">Press F6 to toggle</span></h3>
+            <button class="btn btn-red btn-sm" onclick="closeModal('apiKeyModal')">✖</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:12px; color:#475569; margin-top:0;">
+                English mathi NCERT Gujarati translation mate tamari free <strong>Google Gemini API Key</strong> ahiya paste karo. Aa key tamara browser ma j safe rahese.
+            </p>
+            <div class="form-group">
+                <label>Gemini API Key:</label>
+                <input type="text" id="geminiApiKeyInput" placeholder="AIzaSy..." oninput="saveSettingsLocally()">
+            </div>
+            <div style="font-size:11.5px; color:#64748b; margin-top:8px; line-height:1.5;">
+                📌 <em>Free API Key melvva: <a href="https://aistudio.google.com/" target="_blank" style="color:#2563eb; font-weight:bold;">Google AI Studio</a> par jaine 1 minute ma free key generate kari sako cho.</em>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-green" onclick="closeModal('apiKeyModal')">Save & Done</button>
+        </div>
     </div>
 </div>
 
@@ -1002,10 +1033,16 @@
                 m.style.display = isOpen ? 'none' : 'flex';
                 if (!isOpen) updateBgStatusUI();
             }
+            if (e.key === 'F6') {
+                e.preventDefault();
+                const m = document.getElementById('apiKeyModal');
+                m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+            }
             if (e.key === 'Escape') {
                 closeModal('pdfSettingsModal');
                 closeModal('badgeSettingsModal');
                 closeModal('pngSettingsModal');
+                closeModal('apiKeyModal');
                 closePreviewModal();
             }
 
@@ -1128,7 +1165,8 @@
                 pngBadgeBgColor: document.getElementById('pngBadgeBgColor')?.value || '#0d2b45',
                 badgeBorderTextColor: document.getElementById('badgeBorderTextColor')?.value || '#ffffff',
                 badgeBgFillColor: document.getElementById('badgeBgFillColor')?.value || '#1976d2',
-                pngBgColor: document.getElementById('pngBgColor')?.value || '#0b0f19'
+                pngBgColor: document.getElementById('pngBgColor')?.value || '#0b0f19',
+                geminiApiKey: document.getElementById('geminiApiKeyInput')?.value?.trim() || ''
             };
             localStorage.setItem('qb_settings', JSON.stringify(settings));
             updateBadgePreview();
@@ -1179,6 +1217,9 @@
                 if (s.pngBgColor) {
                     document.getElementById('pngBgColor').value = s.pngBgColor;
                     document.getElementById('pngBgColorHex').value = s.pngBgColor.toUpperCase();
+                }
+                if (s.geminiApiKey) {
+                    document.getElementById('geminiApiKeyInput').value = s.geminiApiKey;
                 }
             } catch(e) {}
         }
@@ -1797,6 +1838,175 @@
         });
     }
 
+    // ==================== FAST & NCERT ACCURATE BIOLOGY TRANSLATION ====================
+    async function translateCurrentQuestionWithAI() {
+        const apiKey = document.getElementById('geminiApiKeyInput')?.value?.trim();
+        if (!apiKey) {
+            openModal('apiKeyModal');
+            alert("કૃપા કરીને પહેલાં તમારી Google Gemini API Key દાખલ કરો!");
+            return;
+        }
+
+        const type = document.getElementById('qType').value;
+        const qText = document.getElementById('qText').value.trim();
+
+        let payload = {
+            type: type,
+            qText: qText,
+            bottomText: document.getElementById('bottomText')?.value.trim() || '',
+            assertionA: document.getElementById('assertA')?.value.trim() || '',
+            reasonR: document.getElementById('reasonR')?.value.trim() || '',
+            stmt1: document.getElementById('stmt1Input')?.value.trim() || '',
+            stmt2: document.getElementById('stmt2Input')?.value.trim() || '',
+            statements: Array.from(document.querySelectorAll('.stmt')).map(s => s.value.trim()),
+            col1Header: document.getElementById('col1Header')?.value.trim() || '',
+            col2Header: document.getElementById('col2Header')?.value.trim() || '',
+            colA: Array.from(document.querySelectorAll('.colA')).map(i => i.value.trim()),
+            colB: Array.from(document.querySelectorAll('.colB')).map(i => i.value.trim()),
+            options: {
+                opt1: document.getElementById('optTxt_1')?.value.trim() || '',
+                opt2: document.getElementById('optTxt_2')?.value.trim() || '',
+                opt3: document.getElementById('optTxt_3')?.value.trim() || '',
+                opt4: document.getElementById('optTxt_4')?.value.trim() || ''
+            }
+        };
+
+        const aiBtn = document.getElementById('aiTranslateBtn');
+        const originalBtnText = aiBtn.innerHTML;
+        aiBtn.innerHTML = '⚡ Fast Translating...';
+        aiBtn.disabled = true;
+
+        const systemInstruction = `You are a strict NCERT Biology Translator for NEET Gujarati Medium (GSEB Standard 11 & 12).
+DO NOT use Hindi NCERT terms (Never translate perisperm as પરિભ્રૂણપોષ).
+Translate strictly into official GSEB/NCERT Gujarati textbook terminology:
+Mandatory Glossary Mappings:
+- Perisperm -> બીજદેહશેષ
+- Nucellus -> પ્રદેહ
+- Aleurone layer -> સમિતાયા સ્તર
+- Coleoptile -> ભ્રૂણચોલ
+- Coleorhiza -> ભ્રૂણમૂળચોલ
+- Scutellum -> વરુથિકા
+- Tapetum -> પોષકસ્તર
+- Endosperm -> ભ્રૂણપોષ
+- Parthenocarpy -> અસંગોગિફલન (અફલિત ફળ વિકાસ)
+- Apomixis -> અસંગોગિજનન
+- Transcription -> પ્રત્યાંકન
+- Translation -> ભાષાંતરણ
+- Replication -> સ્વયંજનન
+- Pollination -> પરાગનયન
+- Microsporangium -> લઘુબીજાણુધાની
+- Megasporangium -> મહાબીજાણુધાની
+- Pistil / Carpel -> સ્ત્રીકેસર
+- Stamen -> પુંકેસર
+- Recombinant -> પુનઃસંયોજિત
+- Codon -> સંકેત
+- Operon -> ઓપેરોન
+- Kinetochore -> કાઇનેટોકોર
+- Centromere -> સેન્ટ્રોમિયર (તારાકેન્દ્ર / સેન્ટ્રોસોમ અલગ છે)
+- Monocotyledon -> એકદળી
+- Dicotyledon -> દ્વિદળી
+
+Speed & Output Rules:
+1. Translate as fast and concise as possible without extra filler.
+2. Return ONLY a valid raw JSON object strictly mirroring the input keys. No markdown backticks, no explanations.`;
+
+        const requestPrompt = `Translate this Biology payload into NCERT Gujarati JSON:\n${JSON.stringify(payload)}`;
+
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: systemInstruction },
+                            { text: requestPrompt }
+                        ]
+                    }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        temperature: 0,
+                        thinkingConfig: { thinkingBudget: 0 }
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData?.error?.message || "Gemini API error");
+            }
+
+            const data = await response.json();
+            const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!textResult) throw new Error("No response received from Gemini.");
+
+            const translated = JSON.parse(textResult);
+
+            if (translated.qText) document.getElementById('qText').value = translated.qText;
+            if (translated.bottomText && document.getElementById('bottomText')) {
+                document.getElementById('bottomText').value = translated.bottomText;
+            }
+            if (translated.assertionA && document.getElementById('assertA')) {
+                document.getElementById('assertA').value = translated.assertionA;
+            }
+            if (translated.reasonR && document.getElementById('reasonR')) {
+                document.getElementById('reasonR').value = translated.reasonR;
+            }
+            if (translated.stmt1 && document.getElementById('stmt1Input')) {
+                document.getElementById('stmt1Input').value = translated.stmt1;
+            }
+            if (translated.stmt2 && document.getElementById('stmt2Input')) {
+                document.getElementById('stmt2Input').value = translated.stmt2;
+            }
+
+            if (translated.statements && Array.isArray(translated.statements)) {
+                const stmtInputs = document.querySelectorAll('.stmt');
+                translated.statements.forEach((txt, idx) => {
+                    if (stmtInputs[idx]) stmtInputs[idx].value = txt;
+                });
+            }
+
+            if (translated.col1Header && document.getElementById('col1Header')) {
+                document.getElementById('col1Header').value = translated.col1Header;
+            }
+            if (translated.col2Header && document.getElementById('col2Header')) {
+                document.getElementById('col2Header').value = translated.col2Header;
+            }
+
+            if (translated.colA && Array.isArray(translated.colA)) {
+                const colAInputs = document.querySelectorAll('.colA');
+                translated.colA.forEach((txt, idx) => {
+                    if (colAInputs[idx]) colAInputs[idx].value = txt;
+                });
+            }
+
+            if (translated.colB && Array.isArray(translated.colB)) {
+                const colBInputs = document.querySelectorAll('.colB');
+                translated.colB.forEach((txt, idx) => {
+                    if (colBInputs[idx]) colBInputs[idx].value = txt;
+                });
+            }
+
+            if (translated.options) {
+                ['1', '2', '3', '4'].forEach(optNum => {
+                    const optKey = `opt${optNum}`;
+                    const el = document.getElementById(`optTxt_${optNum}`);
+                    if (el && translated.options[optKey]) {
+                        el.value = translated.options[optKey];
+                    }
+                });
+            }
+
+        } catch (error) {
+            console.error("AI Translation Error:", error);
+            alert("ભાષાંતર કરવામાં ભૂલ આવી: " + error.message);
+        } finally {
+            aiBtn.innerHTML = originalBtnText;
+            aiBtn.disabled = false;
+        }
+    }
+
     /* REFERENCE LAYOUT MATCHED CANVAS GENERATOR */
     async function generate169Canvas(index) {
         const q = questionsArr[index];
@@ -1809,15 +2019,12 @@
         const optColor = document.getElementById('pngOptColor')?.value || '#ffffff';
         const optSize = document.getElementById('pngOptSize')?.value || '36';
         
-        // Option numbered circles colors
         const badgeColor = document.getElementById('pngBadgeColor')?.value || '#1976d2';
         const badgeBgColor = document.getElementById('pngBadgeBgColor')?.value || '#0d2b45';
 
-        // Main Question Badge Colors (F3 Controlled)
         const qBadgeBorderText = document.getElementById('badgeBorderTextColor')?.value || '#ffffff';
         const qBadgeBgFill = document.getElementById('badgeBgFillColor')?.value || '#1976d2';
 
-        // Blank Solid BG Color (F4 Controlled)
         const solidBgColor = document.getElementById('pngBgColor')?.value || '#0b0f19';
 
         if (badgeEl) {
@@ -1826,7 +2033,6 @@
             badgeEl.style.borderColor = qBadgeBorderText;
         }
 
-        // Apply Image if uploaded, otherwise use Blank Solid Color
         if (customBGData) {
             container.style.backgroundImage = `url('${customBGData}')`;
             container.style.backgroundColor = 'transparent';
@@ -1837,7 +2043,6 @@
 
         let pyqHTML = q.pyq ? `<span style="margin-left: auto; font-size:${parseInt(qSize)-10}px; background: rgba(25,118,210,0.2); border: 1.5px solid rgba(33,150,243,0.6); color: #ffffff; padding: 4px 16px; border-radius: 8px; font-weight: 700; white-space: nowrap; align-self: flex-start;">${q.pyq}</span>` : '';
 
-        // Reference Question Box Format (Pure Bold: 700)
         let contentHTML = `<div style="display:flex; align-items:flex-start; font-weight:700; color:${qColor}; margin-bottom:25px; font-size:${qSize}px; line-height:1.45; width: 100%;">
             <div style="flex-grow: 1; color:${qColor}; padding-right: 15px; font-weight:700;">${q.text ? q.text : ''}</div>
             ${pyqHTML}
@@ -1845,7 +2050,6 @@
 
         let subContentHTML = '';
 
-        // Helper function for Option items using numbered badges 1, 2, 3, 4 with unified border/text color & custom fill color
         function renderSingleOption(optKey) {
             const opt = q.options[optKey] || q.options[String.fromCharCode(64 + parseInt(optKey))];
             if (!opt || !opt.text) return '';
@@ -1855,7 +2059,6 @@
             </div>`;
         }
 
-        // ================= FIGURE TYPE QUESTION: 2-COLUMN LAYOUT =================
         if (q.type === 'figure') {
             const figureImgHTML = q.mainImg ? `<div style="flex: 1; display: flex; justify-content: center; align-items: center; padding-right: 25px;">
                 <img src="${q.mainImg}" style="max-height: 540px; max-width: 100%; width: ${q.mainImgScale || 75}%; object-fit: contain; border-radius: 8px;">
@@ -1873,7 +2076,6 @@
             </div>`;
         } 
         else {
-            // General Main Image (for non-figure types)
             if (q.mainImg) {
                 const imgWidthPx = Math.round((1200 * (q.mainImgScale || 60)) / 100);
                 subContentHTML += `<div style="margin: 10px 0 20px 0; width: 100%; display: flex; justify-content: flex-start; align-items: center;">
@@ -1884,7 +2086,6 @@
             if (q.type === 'match') {
                 const head1 = q.details.title1 || 'Column - I';
                 const head2 = q.details.title2 || 'Column - II';
-                // MATCH TABLE DETAILS: Routed to qColor and Pure Bold (700)
                 subContentHTML += `<table class="export-match-table" style="color:${qColor}; font-weight:700;">
                     <thead><tr><th style="color:${qColor}; font-weight:700;">${head1}</th><th style="color:${qColor}; font-weight:700;">${head2}</th></tr></thead><tbody>`;
                 const maxRows = Math.max(q.details.colA.length, q.details.colB.length);
@@ -1905,7 +2106,6 @@
                     subContentHTML += `<div style="font-size:${qSize}px; font-weight:700; margin: 15px 0 5px 0; color:${qColor};">${q.details.bottomText}</div>`;
                 }
 
-                // MATCH TYPE: Options (1, 2, 3, 4) routed to optColor
                 subContentHTML += `<div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 50px; row-gap: 22px; font-size:${optSize}px; font-weight:700; margin-top: 40px; color:${optColor}; width:100%;">
                     <div>${renderSingleOption('1')}</div>
                     <div>${renderSingleOption('2')}</div>
@@ -1914,7 +2114,6 @@
                 </div>`;
             } 
             else if (q.type === 'assertion') {
-                // ASSERTION - REASON: Routed to qColor and Pure Bold (700)
                 subContentHTML += `<div style="font-size:${qSize}px; margin-bottom:20px; font-weight:700; line-height:1.5; color:${qColor};">
                     <div style="margin-bottom:12px; display:flex; gap:10px;">
                         <b style="color:${qColor}; white-space:nowrap; font-weight:800;">વિધાન (A):</b>
@@ -1927,7 +2126,6 @@
                 </div>`;
             } 
             else if (q.type === 'two_statements') {
-                // STATEMENTS I & II: Routed to qColor and Pure Bold (700)
                 subContentHTML += `<div style="font-size:${qSize}px; margin-bottom:20px; font-weight:700; line-height:1.5; color:${qColor};">
                     <div style="margin-bottom:12px; display:flex; gap:10px;">
                         <b style="color:${qColor}; white-space:nowrap; font-weight:800;">વિધાન I:</b>
@@ -1940,7 +2138,6 @@
                 </div>`;
             }
             else if (q.type === 'statement') {
-                // MULTIPLE STATEMENTS: Routed to qColor and Pure Bold (700)
                 subContentHTML += `<div style="font-size:${qSize}px; margin-bottom:20px; font-weight:700; line-height:1.5; color:${qColor};">
                     ${q.details.stmts.map((s, idx) => `<div style="margin-bottom:8px;"><b style="color:${qColor}; font-weight:800;">(${toRoman(idx + 1)})</b> <span style="font-weight:700;">${s}</span></div>`).join('')}
                 </div>`;
@@ -1949,7 +2146,6 @@
                 }
             }
 
-            // Normal Vertical Stack Options for non-match, non-figure questions (routed to optColor)
             if (q.type !== 'full_image' && q.type !== 'match') {
                 subContentHTML += `<div style="display:flex; flex-direction:column; gap:26px; font-size:${optSize}px; font-weight:700; margin-top:45px; color:${optColor}; width:100%;">`;
                 ['1', '2', '3', '4'].forEach(k => {
@@ -2333,7 +2529,7 @@
         downloadImageFromUrl(canvas.toDataURL('image/png'), index);
     }
 
-    /* UPDATED: FULL SUPPORT FOR IPHONE / MOBILE SAFARI WEB SHARE & BLOB DOWNLOAD */
+    /* FULL SUPPORT FOR IPHONE / MOBILE SAFARI WEB SHARE & BLOB DOWNLOAD */
     async function downloadImageFromUrl(dataUrl, index) {
         const q = questionsArr[index];
         const displayNum = q.customNum ? q.customNum : `${index + 1})`;
@@ -2344,7 +2540,6 @@
             const blob = await res.blob();
             const file = new File([blob], fileName, { type: 'image/png' });
 
-            // iOS / Mobile Web Share API: Opens Native Share Sheet to "Save Image" to Photos
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
                     files: [file],
@@ -2353,7 +2548,6 @@
                 return;
             }
 
-            // Standard PC / Android Blob Download
             const blobUrl = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = blobUrl;
@@ -2363,7 +2557,6 @@
             document.body.removeChild(link);
             setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
         } catch (err) {
-            // Fallback for browsers that block download: Opens image in new tab for manual long-press saving
             const newTab = window.open();
             if (newTab) {
                 newTab.document.write(`<title>${fileName}</title><img src="${dataUrl}" style="max-width:100%; height:auto;" alt="Long press to save">`);
