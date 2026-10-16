@@ -601,7 +601,7 @@
         <div class="panel-header">
             <h3 id="formTitle">✏️ પ્રશ્ન ઉમેરો / એડિટ કરો</h3>
             <div style="display:flex; gap:5px; flex-wrap:wrap;">
-                <button class="btn btn-teal btn-sm" id="aiTranslateBtn" onclick="translateCurrentQuestionWithAI()" title="Translate English Question & Options to NCERT Biology Gujarati">
+                <button class="btn btn-teal btn-sm" id="aiTranslateBtn" onclick="translateCurrentQuestionWithAI()" title="Fast Translate English Question & Options to NCERT Biology Gujarati">
                     ⚡ AI Translate (NCERT Guj)
                 </button>
                 <button class="btn btn-green btn-sm" id="saveBtn" onclick="saveQuestion()">💾 સેવ કરો</button>
@@ -1838,7 +1838,7 @@
         });
     }
 
-    // ==================== FAST & NCERT ACCURATE BIOLOGY TRANSLATION ====================
+    // ==================== ULTRA-FAST AUTO-RETRY BIOLOGY TRANSLATION ====================
     async function translateCurrentQuestionWithAI() {
         const apiKey = document.getElementById('geminiApiKeyInput')?.value?.trim();
         if (!apiKey) {
@@ -1850,160 +1850,175 @@
         const type = document.getElementById('qType').value;
         const qText = document.getElementById('qText').value.trim();
 
-        let payload = {
-            type: type,
-            qText: qText,
-            bottomText: document.getElementById('bottomText')?.value.trim() || '',
-            assertionA: document.getElementById('assertA')?.value.trim() || '',
-            reasonR: document.getElementById('reasonR')?.value.trim() || '',
-            stmt1: document.getElementById('stmt1Input')?.value.trim() || '',
-            stmt2: document.getElementById('stmt2Input')?.value.trim() || '',
-            statements: Array.from(document.querySelectorAll('.stmt')).map(s => s.value.trim()),
-            col1Header: document.getElementById('col1Header')?.value.trim() || '',
-            col2Header: document.getElementById('col2Header')?.value.trim() || '',
-            colA: Array.from(document.querySelectorAll('.colA')).map(i => i.value.trim()),
-            colB: Array.from(document.querySelectorAll('.colB')).map(i => i.value.trim()),
-            options: {
-                opt1: document.getElementById('optTxt_1')?.value.trim() || '',
-                opt2: document.getElementById('optTxt_2')?.value.trim() || '',
-                opt3: document.getElementById('optTxt_3')?.value.trim() || '',
-                opt4: document.getElementById('optTxt_4')?.value.trim() || ''
-            }
-        };
+        // Optimized Compact Payload (Empty keys ignored for faster network transfer)
+        let payload = { type: type, qText: qText };
+        
+        const bText = document.getElementById('bottomText')?.value.trim();
+        if (bText) payload.bottomText = bText;
+
+        if (type === 'assertion') {
+            payload.assertionA = document.getElementById('assertA')?.value.trim() || '';
+            payload.reasonR = document.getElementById('reasonR')?.value.trim() || '';
+        } else if (type === 'two_statements') {
+            payload.stmt1 = document.getElementById('stmt1Input')?.value.trim() || '';
+            payload.stmt2 = document.getElementById('stmt2Input')?.value.trim() || '';
+        } else if (type === 'statement') {
+            payload.statements = Array.from(document.querySelectorAll('.stmt')).map(s => s.value.trim()).filter(Boolean);
+        } else if (type === 'match') {
+            payload.col1Header = document.getElementById('col1Header')?.value.trim() || '';
+            payload.col2Header = document.getElementById('col2Header')?.value.trim() || '';
+            payload.colA = Array.from(document.querySelectorAll('.colA')).map(i => i.value.trim());
+            payload.colB = Array.from(document.querySelectorAll('.colB')).map(i => i.value.trim());
+        }
+
+        let opts = {};
+        for (let i = 1; i <= 4; i++) {
+            const val = document.getElementById(`optTxt_${i}`)?.value.trim();
+            if (val) opts[`opt${i}`] = val;
+        }
+        if (Object.keys(opts).length > 0) payload.options = opts;
 
         const aiBtn = document.getElementById('aiTranslateBtn');
         const originalBtnText = aiBtn.innerHTML;
         aiBtn.innerHTML = '⚡ Fast Translating...';
         aiBtn.disabled = true;
 
-        const systemInstruction = `You are a strict NCERT Biology Translator for NEET Gujarati Medium (GSEB Standard 11 & 12).
-DO NOT use Hindi NCERT terms (Never translate perisperm as પરિભ્રૂણપોષ).
-Translate strictly into official GSEB/NCERT Gujarati textbook terminology:
-Mandatory Glossary Mappings:
-- Perisperm -> બીજદેહશેષ
-- Nucellus -> પ્રદેહ
-- Aleurone layer -> સમિતાયા સ્તર
-- Coleoptile -> ભ્રૂણચોલ
-- Coleorhiza -> ભ્રૂણમૂળચોલ
-- Scutellum -> વરુથિકા
-- Tapetum -> પોષકસ્તર
-- Endosperm -> ભ્રૂણપોષ
-- Parthenocarpy -> અસંગોગિફલન (અફલિત ફળ વિકાસ)
-- Apomixis -> અસંગોગિજનન
-- Transcription -> પ્રત્યાંકન
-- Translation -> ભાષાંતરણ
-- Replication -> સ્વયંજનન
-- Pollination -> પરાગનયન
-- Microsporangium -> લઘુબીજાણુધાની
-- Megasporangium -> મહાબીજાણુધાની
-- Pistil / Carpel -> સ્ત્રીકેસર
-- Stamen -> પુંકેસર
-- Recombinant -> પુનઃસંયોજિત
-- Codon -> સંકેત
-- Operon -> ઓપેરોન
-- Kinetochore -> કાઇનેટોકોર
-- Centromere -> સેન્ટ્રોમિયર (તારાકેન્દ્ર / સેન્ટ્રોસોમ અલગ છે)
-- Monocotyledon -> એકદળી
-- Dicotyledon -> દ્વિદળી
+        const systemInstruction = `Strict GSEB/NCERT Biology Standard 11 & 12 Gujarati Terminology.
+Translate English Biology MCQ to pure NCERT Gujarati. NEVER use Hindi terms.
+Crucial Mappings:
+- Perisperm -> બીજદેહશેષ (Never પરિભ્રૂણપોષ)
+- Nucellus -> પ્રદેહ | Aleurone -> સમિતાયા સ્તર
+- Coleoptile -> ભ્રૂણચોલ | Coleorhiza -> ભ્રૂણમૂળચોલ
+- Scutellum -> વરુથિકા | Tapetum -> પોષકસ્તર
+- Endosperm -> ભ્રૂણપોષ | Parthenocarpy -> અસંગોગિફલન
+- Apomixis -> અસંગોગિજનન | Transcription -> પ્રત્યાંકન
+- Translation -> ભાષાંતરણ | Replication -> સ્વયંજનન
+- Pollination -> પરાગનયન | Recombinant -> પુનઃસંયોજિત
+Return ONLY matching raw JSON without markdown or formatting.`;
 
-Speed & Output Rules:
-1. Translate as fast and concise as possible without extra filler.
-2. Return ONLY a valid raw JSON object strictly mirroring the input keys. No markdown backticks, no explanations.`;
+        const requestBody = JSON.stringify({
+            contents: [{
+                parts: [
+                    { text: systemInstruction },
+                    { text: `Translate to NCERT Gujarati JSON:\n${JSON.stringify(payload)}` }
+                ]
+            }],
+            generationConfig: {
+                responseMimeType: "application/json",
+                temperature: 0.1
+            }
+        });
 
-        const requestPrompt = `Translate this Biology payload into NCERT Gujarati JSON:\n${JSON.stringify(payload)}`;
+        // Fast high-availability candidate list (8b first for super-fast latency)
+        const candidateModels = [
+            'gemini-1.5-flash-8b',
+            'gemini-1.5-flash',
+            'gemini-2.5-flash'
+        ];
 
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: systemInstruction },
-                            { text: requestPrompt }
-                        ]
-                    }],
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        temperature: 0,
-                        thinkingConfig: { thinkingBudget: 0 }
+        let success = false;
+        let lastError = "";
+
+        for (const model of candidateModels) {
+            if (success) break;
+            
+            for (let attempt = 1; attempt <= 2; attempt++) {
+                try {
+                    aiBtn.innerHTML = `⚡ Translating (${model.includes('8b') ? 'Turbo' : 'Fast'})...`;
+                    
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: requestBody
+                    });
+
+                    if (response.status === 429 || response.status === 503) {
+                        // Busy server backoff
+                        await new Promise(r => setTimeout(r, 700));
+                        continue;
                     }
-                })
-            });
 
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData?.error?.message || "Gemini API error");
-            }
-
-            const data = await response.json();
-            const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!textResult) throw new Error("No response received from Gemini.");
-
-            const translated = JSON.parse(textResult);
-
-            if (translated.qText) document.getElementById('qText').value = translated.qText;
-            if (translated.bottomText && document.getElementById('bottomText')) {
-                document.getElementById('bottomText').value = translated.bottomText;
-            }
-            if (translated.assertionA && document.getElementById('assertA')) {
-                document.getElementById('assertA').value = translated.assertionA;
-            }
-            if (translated.reasonR && document.getElementById('reasonR')) {
-                document.getElementById('reasonR').value = translated.reasonR;
-            }
-            if (translated.stmt1 && document.getElementById('stmt1Input')) {
-                document.getElementById('stmt1Input').value = translated.stmt1;
-            }
-            if (translated.stmt2 && document.getElementById('stmt2Input')) {
-                document.getElementById('stmt2Input').value = translated.stmt2;
-            }
-
-            if (translated.statements && Array.isArray(translated.statements)) {
-                const stmtInputs = document.querySelectorAll('.stmt');
-                translated.statements.forEach((txt, idx) => {
-                    if (stmtInputs[idx]) stmtInputs[idx].value = txt;
-                });
-            }
-
-            if (translated.col1Header && document.getElementById('col1Header')) {
-                document.getElementById('col1Header').value = translated.col1Header;
-            }
-            if (translated.col2Header && document.getElementById('col2Header')) {
-                document.getElementById('col2Header').value = translated.col2Header;
-            }
-
-            if (translated.colA && Array.isArray(translated.colA)) {
-                const colAInputs = document.querySelectorAll('.colA');
-                translated.colA.forEach((txt, idx) => {
-                    if (colAInputs[idx]) colAInputs[idx].value = txt;
-                });
-            }
-
-            if (translated.colB && Array.isArray(translated.colB)) {
-                const colBInputs = document.querySelectorAll('.colB');
-                translated.colB.forEach((txt, idx) => {
-                    if (colBInputs[idx]) colBInputs[idx].value = txt;
-                });
-            }
-
-            if (translated.options) {
-                ['1', '2', '3', '4'].forEach(optNum => {
-                    const optKey = `opt${optNum}`;
-                    const el = document.getElementById(`optTxt_${optNum}`);
-                    if (el && translated.options[optKey]) {
-                        el.value = translated.options[optKey];
+                    if (!response.ok) {
+                        const errJson = await response.json().catch(() => ({}));
+                        throw new Error(errJson?.error?.message || `HTTP ${response.status}`);
                     }
-                });
-            }
 
-        } catch (error) {
-            console.error("AI Translation Error:", error);
-            alert("ભાષાંતર કરવામાં ભૂલ આવી: " + error.message);
-        } finally {
-            aiBtn.innerHTML = originalBtnText;
-            aiBtn.disabled = false;
+                    const data = await response.json();
+                    const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!textResult) throw new Error("Empty response");
+
+                    const translated = JSON.parse(textResult);
+
+                    if (translated.qText) document.getElementById('qText').value = translated.qText;
+                    if (translated.bottomText && document.getElementById('bottomText')) {
+                        document.getElementById('bottomText').value = translated.bottomText;
+                    }
+                    if (translated.assertionA && document.getElementById('assertA')) {
+                        document.getElementById('assertA').value = translated.assertionA;
+                    }
+                    if (translated.reasonR && document.getElementById('reasonR')) {
+                        document.getElementById('reasonR').value = translated.reasonR;
+                    }
+                    if (translated.stmt1 && document.getElementById('stmt1Input')) {
+                        document.getElementById('stmt1Input').value = translated.stmt1;
+                    }
+                    if (translated.stmt2 && document.getElementById('stmt2Input')) {
+                        document.getElementById('stmt2Input').value = translated.stmt2;
+                    }
+
+                    if (translated.statements && Array.isArray(translated.statements)) {
+                        const stmtInputs = document.querySelectorAll('.stmt');
+                        translated.statements.forEach((txt, idx) => {
+                            if (stmtInputs[idx]) stmtInputs[idx].value = txt;
+                        });
+                    }
+
+                    if (translated.col1Header && document.getElementById('col1Header')) {
+                        document.getElementById('col1Header').value = translated.col1Header;
+                    }
+                    if (translated.col2Header && document.getElementById('col2Header')) {
+                        document.getElementById('col2Header').value = translated.col2Header;
+                    }
+
+                    if (translated.colA && Array.isArray(translated.colA)) {
+                        const colAInputs = document.querySelectorAll('.colA');
+                        translated.colA.forEach((txt, idx) => {
+                            if (colAInputs[idx]) colAInputs[idx].value = txt;
+                        });
+                    }
+
+                    if (translated.colB && Array.isArray(translated.colB)) {
+                        const colBInputs = document.querySelectorAll('.colB');
+                        translated.colB.forEach((txt, idx) => {
+                            if (colBInputs[idx]) colBInputs[idx].value = txt;
+                        });
+                    }
+
+                    if (translated.options) {
+                        ['1', '2', '3', '4'].forEach(optNum => {
+                            const optKey = `opt${optNum}`;
+                            const el = document.getElementById(`optTxt_${optNum}`);
+                            if (el && translated.options[optKey]) {
+                                el.value = translated.options[optKey];
+                            }
+                        });
+                    }
+
+                    success = true;
+                    break;
+                } catch (err) {
+                    lastError = err.message;
+                    await new Promise(r => setTimeout(r, 600));
+                }
+            }
+        }
+
+        aiBtn.innerHTML = originalBtnText;
+        aiBtn.disabled = false;
+
+        if (!success) {
+            alert("ભાષાંતર સર્વર હાલ વ્યસ્ત છે: " + lastError);
         }
     }
 
