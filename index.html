@@ -30,9 +30,7 @@
             --bg-color: #f1f5f9;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             font-family: 'Noto Sans Gujarati', 'Noto Sans', sans-serif;
@@ -46,7 +44,6 @@
             overflow: hidden;
         }
 
-        /* TOP COMPACT NAV BAR */
         .top-navbar {
             background: #ffffff;
             padding: 6px 14px;
@@ -100,7 +97,6 @@
             font-family: monospace;
         }
 
-        /* 2-COLUMN OPTIMIZED DASHBOARD WORKSPACE */
         .app-workspace {
             display: grid;
             grid-template-columns: 58fr 42fr;
@@ -493,7 +489,6 @@
         .modal-img { max-width: 100%; max-height: 72vh; object-fit: contain; }
         .pdf-frame { width: 100%; height: 72vh; border: 1px solid #ccc; border-radius: 4px; }
 
-        /* MOBILE & IPHONE PORTRAIT RESPONSIVE CSS */
         @media (max-width: 900px) {
             body {
                 height: auto;
@@ -595,7 +590,6 @@
 </div>
 
 <div class="app-workspace">
-
     <!-- LEFT COLUMN: QUESTION ENTRY FORM -->
     <div class="column-card">
         <div class="panel-header">
@@ -759,7 +753,7 @@
     </div>
 </div>
 
-<!-- POPUP MODAL: QUESTION BADGE COLOR SETTINGS (F3 - WITH HEX CODE INPUT) -->
+<!-- POPUP MODAL: QUESTION BADGE COLOR SETTINGS (F3) -->
 <div id="badgeSettingsModal" class="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
@@ -794,7 +788,7 @@
     </div>
 </div>
 
-<!-- POPUP MODAL 2: 16:9 PNG FONT, COLOR & BACKGROUND SETTINGS (F4 - WITH HEX CODE INPUT) -->
+<!-- POPUP MODAL 2: 16:9 PNG FONT, COLOR & BACKGROUND SETTINGS (F4) -->
 <div id="pngSettingsModal" class="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
@@ -921,7 +915,6 @@
         '4': 'વિધાન I ખોટું છે, પરંતુ વિધાન II સાચું છે'
     };
 
-    // ==================== INDEXED-DB HIGH CAPACITY STORAGE SYSTEM ====================
     let db;
     function initDatabase() {
         return new Promise((resolve, reject) => {
@@ -1000,12 +993,8 @@
 
     function openModal(modalId) {
         document.getElementById(modalId).style.display = 'flex';
-        if (modalId === 'badgeSettingsModal') {
-            updateBadgePreview();
-        }
-        if (modalId === 'pngSettingsModal') {
-            updateBgStatusUI();
-        }
+        if (modalId === 'badgeSettingsModal') updateBadgePreview();
+        if (modalId === 'pngSettingsModal') updateBgStatusUI();
     }
 
     function closeModal(modalId) {
@@ -1060,13 +1049,10 @@
         });
     }
 
-    /* 2-WAY COLOR SYNC FUNCTIONS FOR HEX CODES */
     function syncColorWithHex(colorPickerId, hexInputId) {
         const picker = document.getElementById(colorPickerId);
         const hexInp = document.getElementById(hexInputId);
-        if (picker && hexInp) {
-            hexInp.value = picker.value.toUpperCase();
-        }
+        if (picker && hexInp) hexInp.value = picker.value.toUpperCase();
         saveSettingsLocally();
     }
 
@@ -1074,12 +1060,8 @@
         const hexInp = document.getElementById(hexInputId);
         const picker = document.getElementById(colorPickerId);
         if (!hexInp || !picker) return;
-
         let val = hexInp.value.trim();
-        if (!val.startsWith('#')) {
-            val = '#' + val;
-        }
-
+        if (!val.startsWith('#')) val = '#' + val;
         const validHexPattern = /^#([0-9A-Fa-f]{6})$/;
         if (validHexPattern.test(val)) {
             picker.value = val;
@@ -1271,9 +1253,7 @@
         currentMainImgScale = parseInt(val);
         document.getElementById('imgScaleVal').innerText = val + '%';
         const preview = document.getElementById('qMainImgPreview');
-        if (preview) {
-            preview.style.width = val + '%';
-        }
+        if (preview) preview.style.width = val + '%';
     }
 
     function handleSingleImgUpload(event, targetKey) {
@@ -1633,9 +1613,7 @@
                         boxContainer.querySelectorAll('input').forEach(inp => {
                             const k = inp.dataset.colKey;
                             const val = inp.value.trim();
-                            if (val) {
-                                parts.push(`${k} - ${val}`);
-                            }
+                            if (val) parts.push(`${k} - ${val}`);
                         });
                     }
                     formattedOptions[opt] = { text: parts.join(', ') };
@@ -1838,7 +1816,7 @@
         });
     }
 
-    // ==================== ULTRA-FAST AUTO-RETRY BIOLOGY TRANSLATION ====================
+    // ==================== MASTER NCERT BIOLOGY GUJARATI ENGINE ====================
     async function translateCurrentQuestionWithAI() {
         const apiKey = document.getElementById('geminiApiKeyInput')?.value?.trim();
         if (!apiKey) {
@@ -1850,9 +1828,7 @@
         const type = document.getElementById('qType').value;
         const qText = document.getElementById('qText').value.trim();
 
-        // Optimized Compact Payload (Empty keys ignored for faster network transfer)
         let payload = { type: type, qText: qText };
-        
         const bText = document.getElementById('bottomText')?.value.trim();
         if (bText) payload.bottomText = bText;
 
@@ -1880,36 +1856,81 @@
 
         const aiBtn = document.getElementById('aiTranslateBtn');
         const originalBtnText = aiBtn.innerHTML;
-        aiBtn.innerHTML = '⚡ Fast Translating...';
+        aiBtn.innerHTML = '⚡ NCERT Translating...';
         aiBtn.disabled = true;
 
-        const systemInstruction = `Strict GSEB/NCERT Biology Standard 11 & 12 Gujarati Terminology.
-Translate English Biology MCQ to pure NCERT Gujarati. NEVER use Hindi terms.
-Crucial Mappings:
-- Perisperm -> બીજદેહશેષ (Never પરિભ્રૂણપોષ)
-- Nucellus -> પ્રદેહ | Aleurone -> સમિતાયા સ્તર
-- Coleoptile -> ભ્રૂણચોલ | Coleorhiza -> ભ્રૂણમૂળચોલ
-- Scutellum -> વરુથિકા | Tapetum -> પોષકસ્તર
-- Endosperm -> ભ્રૂણપોષ | Parthenocarpy -> અસંગોગિફલન
-- Apomixis -> અસંગોગિજનન | Transcription -> પ્રત્યાંકન
-- Translation -> ભાષાંતરણ | Replication -> સ્વયંજનન
-- Pollination -> પરાગનયન | Recombinant -> પુનઃસંયોજિત
-Return ONLY matching raw JSON without markdown or formatting.`;
+        const systemInstruction = `You are the chief scientific translator for GSEB / NCERT Biology (Standard 11 & 12) Gujarati Medium.
+Strict Mandate: Translate English Biology questions strictly using the authentic Gujarat State Board NCERT textbook glossary. Never use Hindi vocabulary (e.g., Never use પરિભ્રૂણપોષ).
+
+MANDATORY NCERT GUJARATI TERMINOLOGY DICTIONARY:
+[Reproduction in Plants & Angiosperms]
+- Perisperm -> બીજદેહશેષ
+- Nucellus -> પ્રદેહ
+- Endosperm -> ભ્રૂણપોષ
+- Tapetum -> પોષકસ્તર
+- Microsporangium -> લઘુબીજાણુધાની
+- Megasporangium / Ovule -> મહાબીજાણુધાની / અંડક
+- Embryo sac -> ભ્રૂણપૂટ
+- Synergids -> સહાયક કોષો
+- Antipodals -> પ્રતિધ્રુવી કોષો
+- Filiform apparatus -> તંતુમય પ્રસાધન
+- Coleoptile -> ભ્રૂણચોલ
+- Coleorhiza -> ભ્રૂણમૂળચોલ
+- Scutellum -> વરુથિકા
+- Aleurone layer -> સમિતાયા સ્તર
+- Apomixis -> અસંગોગિજનન
+- Parthenocarpy -> અસંગોગિફલન
+- Parthenogenesis -> અસંયોગીજનન
+- Cleistogamous -> સંવૃત (કલિકાગત) પુષ્પો
+- Chasmogamous -> હવાઈ (ઉઘાડા) પુષ્પો
+- Geitonogamy -> ગેઇટોનોગેમી
+- Xenogamy -> પર્વશ / પરપરાગનયન
+
+[Genetics & Molecular Biology]
+- Linkage -> સહલગ્નતા
+- Recombination -> પુનઃસંયોજન
+- Incomplete Dominance -> અપૂર્ણ પ્રભાવિતા
+- Co-dominance -> સહપ્રભાવિતા
+- Pleiotropy -> પ્લિયોટ્રોપી / બહુઅસરીયતા
+- Polygenic inheritance -> બહુજનીનિક વારસો
+- Transcription -> પ્રત્યાંકન
+- Translation -> ભાષાંતરણ
+- Replication -> સ્વયંજનન
+- Codon -> સંકેત
+- Degenerate codon -> અપભ્રષ્ટ સંકેત
+- Cistron -> સિસ્ટ્રોન
+- Splicing -> સ્પ્લાઈસિંગ
+- Capping -> કેપિંગ
+- Tailing -> ટેઇલિંગ
+
+[Biotechnology & Cell Biology]
+- Restriction enzyme -> રિસ્ટ્રિક્શન ઉત્સેચક
+- Recognition sequence -> ઓળખ ક્રમ
+- Selectable marker -> પસંદગીમાન સૂચક
+- Downstream processing -> અનુપ્રવાહિત પ્રક્રિયા
+- Centromere -> સેન્ટ્રોમિયર
+- Kinetochore -> કાઇનેટોકોર
+- Homologous chromosomes -> સમજાત રંગસૂત્રો
+- Crossing over -> વ્યતિકરણ
+- Chiasmata -> સ્વસ્તિક ચોકડીઓ
+
+CRITICAL RULES:
+1. Always keep scientific symbols or English abbreviations intact or in brackets if required (e.g., ATP, RuBisCO, DNA, RNA).
+2. Return ONLY a valid JSON object strictly mirroring the incoming keys. No explanations, no markdown formatting.`;
 
         const requestBody = JSON.stringify({
             contents: [{
                 parts: [
                     { text: systemInstruction },
-                    { text: `Translate to NCERT Gujarati JSON:\n${JSON.stringify(payload)}` }
+                    { text: `Translate this payload into authentic NCERT Gujarati JSON:\n${JSON.stringify(payload)}` }
                 ]
             }],
             generationConfig: {
                 responseMimeType: "application/json",
-                temperature: 0.1
+                temperature: 0.0
             }
         });
 
-        // Google na latest active models
         const candidateModels = [
             'gemini-3.5-flash-lite',
             'gemini-3.8-flash'
@@ -1920,11 +1941,8 @@ Return ONLY matching raw JSON without markdown or formatting.`;
 
         for (const model of candidateModels) {
             if (success) break;
-            
             for (let attempt = 1; attempt <= 2; attempt++) {
                 try {
-                    aiBtn.innerHTML = `⚡ Translating (${model.includes('8b') ? 'Turbo' : 'Fast'})...`;
-                    
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
                     const response = await fetch(url, {
                         method: 'POST',
@@ -1933,7 +1951,6 @@ Return ONLY matching raw JSON without markdown or formatting.`;
                     });
 
                     if (response.status === 429 || response.status === 503) {
-                        // Busy server backoff
                         await new Promise(r => setTimeout(r, 700));
                         continue;
                     }
@@ -2021,7 +2038,6 @@ Return ONLY matching raw JSON without markdown or formatting.`;
         }
     }
 
-    /* REFERENCE LAYOUT MATCHED CANVAS GENERATOR */
     async function generate169Canvas(index) {
         const q = questionsArr[index];
         const container = document.getElementById('hd-export-container');
@@ -2529,9 +2545,7 @@ Return ONLY matching raw JSON without markdown or formatting.`;
 
     async function exportPDF_TwoColumn() {
         const doc = await generatePDFDoc();
-        if (doc) {
-            doc.save("Question_Paper_A4_TwoColumn.pdf");
-        }
+        if (doc) doc.save("Question_Paper_A4_TwoColumn.pdf");
     }
 
     function closePreviewModal() {
@@ -2543,7 +2557,6 @@ Return ONLY matching raw JSON without markdown or formatting.`;
         downloadImageFromUrl(canvas.toDataURL('image/png'), index);
     }
 
-    /* FULL SUPPORT FOR IPHONE / MOBILE SAFARI WEB SHARE & BLOB DOWNLOAD */
     async function downloadImageFromUrl(dataUrl, index) {
         const q = questionsArr[index];
         const displayNum = q.customNum ? q.customNum : `${index + 1})`;
