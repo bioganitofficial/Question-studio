@@ -1,0 +1,2347 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Advanced Question Paper & Image Builder</title>
+    
+    <!-- iOS / iPhone Standalone App & Web App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Question Studio">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1e293b">
+    
+    <!-- Google Fonts for Gujarati and English -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;600;700;800&family=Noto+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- html2canvas and jsPDF libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #1e293b;
+            --accent-color: #2563eb;
+            --bg-color: #f1f5f9;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans Gujarati', 'Noto Sans', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: #1e293b;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* TOP COMPACT NAV BAR */
+        .top-navbar {
+            background: #ffffff;
+            padding: 6px 14px;
+            border-bottom: 1px solid #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            gap: 8px;
+        }
+
+        .top-navbar .brand-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-navbar h2 {
+            margin: 0;
+            font-size: 15px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .top-navbar .badge {
+            font-size: 11px;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .f-key-badge {
+            background: #334155;
+            color: #fff;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 10px;
+            margin-right: 3px;
+            font-family: monospace;
+        }
+
+        /* 2-COLUMN OPTIMIZED DASHBOARD WORKSPACE */
+        .app-workspace {
+            display: grid;
+            grid-template-columns: 58fr 42fr;
+            gap: 10px;
+            padding: 8px 12px;
+            flex: 1;
+            height: calc(100vh - 46px);
+            overflow: hidden;
+        }
+
+        .column-card {
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+            min-width: 0;
+        }
+
+        .panel-header {
+            padding: 7px 12px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            gap: 8px;
+        }
+
+        .panel-header h3 {
+            margin: 0;
+            font-size: 14px;
+            color: var(--primary-color);
+            white-space: nowrap;
+        }
+
+        .panel-scrollable-body {
+            padding: 8px 12px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .form-group {
+            margin-bottom: 6px;
+            min-width: 0;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 2px;
+            font-size: 11.5px;
+            color: #334155;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        input[type="text"], input[type="number"], textarea, select {
+            width: 100%;
+            padding: 5px 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 12.5px;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            font-size: 11px;
+            max-width: 100%;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+        }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .grid-3-custom { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+
+        /* COLOR PICKER WITH HEX INPUT CONTROL GROUP */
+        .color-control-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .color-control-group input[type="color"] {
+            width: 44px;
+            height: 34px;
+            border-radius: 4px;
+            padding: 1px;
+            cursor: pointer;
+            border: 1px solid #cbd5e1;
+            flex-shrink: 0;
+        }
+
+        .color-control-group input[type="text"] {
+            flex: 1;
+            font-family: monospace;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 4px 9px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11.5px;
+            font-weight: 600;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn-green { background-color: #16a34a; }
+        .btn-orange { background-color: #ea580c; }
+        .btn-red { background-color: #dc2626; }
+        .btn-blue { background-color: #2563eb; }
+        .btn-purple { background-color: #7c3aed; }
+        .btn-slate { background-color: #475569; }
+        .btn-sm { padding: 3px 6px; font-size: 11px; }
+
+        .q-item-card {
+            background: #fff;
+            border-left: 4px solid var(--accent-color);
+            padding: 6px 8px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            border-top: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .dynamic-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        /* COMPACT MATCH THE FOLLOWING ROWS */
+        .match-row-compact {
+            display: grid;
+            grid-template-columns: 44fr 56fr;
+            gap: 6px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 4px 6px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            align-items: center;
+        }
+
+        .match-pair-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            margin-right: 4px;
+            margin-bottom: 2px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+        .match-pair-box span {
+            font-weight: 700;
+            font-size: 11.5px;
+            color: #1e293b;
+        }
+
+        .match-pair-box input {
+            width: 38px;
+            padding: 2px 3px;
+            text-align: center;
+            font-size: 11.5px;
+            font-weight: 600;
+            border: 1px solid #94a3b8;
+            border-radius: 2px;
+        }
+
+        .img-fixed-area {
+            border: 1.5px dashed #cbd5e1;
+            padding: 4px;
+            margin-top: 4px;
+            background: #fafafa;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        /* HD EXPORT CONTAINER & REFERENCE LAYOUT */
+        #hd-export-container {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 1920px;
+            height: 1080px;
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding: 110px 70px 50px 200px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .ref-question-badge {
+            background: #1976d2;
+            color: #ffffff;
+            font-size: 34px;
+            font-weight: 700;
+            padding: 9px 40px;
+            border-radius: 40px;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 0.5px;
+            margin-bottom: 50px;
+            flex-shrink: 0;
+        }
+
+        .hd-card-content {
+            width: 100%;
+            flex: 1;
+            background: transparent;
+            padding: 0px;
+            margin-top: 15px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        /* DYNAMIC MATCH TABLE WITH PURE BOLD (700) */
+        .export-match-table {
+            border-collapse: collapse;
+            margin: 15px 0 20px 0;
+            width: max-content;
+            max-width: 100%;
+            background: transparent;
+            table-layout: auto;
+            box-sizing: border-box;
+        }
+
+        .export-match-table th, .export-match-table td {
+            border: 1.5px solid rgba(255, 255, 255, 0.4);
+            padding: 10px 18px;
+            font-size: 30px;
+            text-align: left;
+            font-weight: 700;
+            vertical-align: middle;
+            line-height: 1.35;
+            width: max-content;
+            max-width: 780px;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .export-match-table th {
+            background-color: rgba(255, 255, 255, 0.08);
+            font-size: 31px;
+            font-weight: 700;
+        }
+
+        .colb-img-container {
+            display: inline-block;
+            background: #ffffff;
+            padding: 6px 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            margin-left: 12px;
+            vertical-align: middle;
+        }
+
+        .pdf-match-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 4px 0;
+            background: transparent;
+            table-layout: fixed;
+        }
+
+        .pdf-match-table th, .pdf-match-table td {
+            border: 1px solid #333333;
+            padding: 4px 6px;
+            font-size: 15px;
+            text-align: left;
+            word-break: break-word;
+            vertical-align: middle;
+        }
+
+        .pdf-match-table th {
+            background-color: rgba(238, 238, 238, 0.5);
+            font-weight: bold;
+        }
+
+        .pdf-match-table th:nth-child(1), .pdf-match-table td:nth-child(1) { width: 45%; }
+        .pdf-match-table th:nth-child(2), .pdf-match-table td:nth-child(2) { width: 55%; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 650px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: fadeIn 0.15s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { transform: scale(0.96); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 10px 14px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 14.5px;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .modal-body {
+            padding: 12px 14px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 7px 14px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .preview-modal-content {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            width: 85%;
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .modal-img { max-width: 100%; max-height: 72vh; object-fit: contain; }
+        .pdf-frame { width: 100%; height: 72vh; border: 1px solid #ccc; border-radius: 4px; }
+
+        /* ==================== MOBILE & IPHONE PORTRAIT RESPONSIVE CSS ==================== */
+        @media (max-width: 900px) {
+            body {
+                height: auto;
+                min-height: 100vh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .top-navbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                padding: 10px 12px;
+                padding-top: max(10px, env(safe-area-inset-top));
+            }
+
+            .top-navbar .brand-area, .nav-actions {
+                width: 100%;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .app-workspace {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                overflow: visible;
+                padding: 8px;
+                gap: 12px;
+                padding-bottom: max(16px, env(safe-area-inset-bottom));
+            }
+
+            .column-card {
+                height: auto;
+                max-height: none;
+                overflow: visible;
+            }
+
+            .panel-scrollable-body {
+                overflow-y: visible;
+                max-height: none;
+                padding: 10px;
+            }
+
+            .grid-3-custom {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .match-row-compact {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+
+            .modal-card {
+                width: 95%;
+                max-height: 88vh;
+            }
+
+            .preview-modal-content {
+                width: 95%;
+                height: 88vh;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOP NAV CONTROLS -->
+<div class="top-navbar">
+    <div class="brand-area">
+        <h2>📝 Question Studio <span class="badge">IndexedDB Active</span></h2>
+        <button class="btn btn-slate btn-sm" onclick="openModal('pdfSettingsModal')" title="Open PDF & Watermark Settings (Press F2)">
+            <span class="f-key-badge">F2</span> 📄 PDF & Header Settings
+        </button>
+        <button class="btn btn-slate btn-sm" onclick="openModal('badgeSettingsModal')" title="Open Question Badge Color Settings (Press F3)">
+            <span class="f-key-badge">F3</span> 🏷️ Question Badge
+        </button>
+        <button class="btn btn-slate btn-sm" onclick="openModal('pngSettingsModal')" title="Open 16:9 Colors, BG & Fonts (Press F4)">
+            <span class="f-key-badge">F4</span> 🎨 16:9 Colors, BG & Fonts
+        </button>
+    </div>
+
+    <div class="nav-actions">
+        <span style="font-size:11px; color:#64748b; margin-right:4px;">Shortcuts: <kbd>Ctrl+Shift+-</kbd> Sub, <kbd>Ctrl+Shift++</kbd> Sup</span>
+        <button class="btn btn-blue btn-sm" onclick="exportDraftJSON()">📥 Save Draft</button>
+        <button class="btn btn-orange btn-sm" onclick="document.getElementById('importDraftFile').click()">📤 Load Draft</button>
+        <input type="file" id="importDraftFile" accept=".json" style="display:none;" onchange="importDraftJSON(event)">
+        <button class="btn btn-red btn-sm" onclick="clearAllData()">🗑️ Clear</button>
+    </div>
+</div>
+
+<div class="app-workspace">
+
+    <!-- LEFT COLUMN: QUESTION ENTRY FORM -->
+    <div class="column-card">
+        <div class="panel-header">
+            <h3 id="formTitle">✏️ પ્રશ્ન ઉમેરો / એડિટ કરો</h3>
+            <div style="display:flex; gap:6px;">
+                <button class="btn btn-green btn-sm" id="saveBtn" onclick="saveQuestion()">💾 સેવ કરો</button>
+                <button class="btn btn-red btn-sm" id="cancelEditBtn" style="display:none;" onclick="cancelEdit()">❌ કેન્સલ</button>
+            </div>
+        </div>
+
+        <div class="panel-scrollable-body">
+            <div class="grid-3-custom">
+                <div class="form-group">
+                    <label>પ્રશ્ન નંબર / લેબલ</label>
+                    <input type="text" id="qNumInput" placeholder="ઉદા. Q.1, 1)">
+                </div>
+                <div class="form-group">
+                    <label>PYQ Tag (Optional)</label>
+                    <input type="text" id="pyqInput" placeholder="ઉદા. [NEET 2023]">
+                </div>
+                <div class="form-group">
+                    <label>પ્રશ્નનો પ્રકાર (Format)</label>
+                    <select id="qType" onchange="renderQuestionInputs()">
+                        <option value="direct">Direct MCQ (સામાન્ય પ્રશ્ન)</option>
+                        <option value="figure">Figure Type Question (આકૃતિ વાળો)</option>
+                        <option value="full_image">Full Question in Image (આખો ઈમેજમાં)</option>
+                        <option value="match">Match the Following (જોડકાં)</option>
+                        <option value="assertion">Assertion - Reason (વિધાન-કારણ)</option>
+                        <option value="two_statements">વિધાન I અને II (Statements I & II)</option>
+                        <option value="statement">Multiple Statements (બહુવિધ વિધાનો)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>પ્રશ્નનું લખાણ (Question Text)</label>
+                <textarea id="qText" rows="2" placeholder="પ્રશ્ન અથવા નોંધ ટાઈપ કરો..."></textarea>
+            </div>
+
+            <div class="form-group" id="mainImgContainer">
+                <label id="mainImgLabel">પ્રશ્નની ઈમેજ / આકૃતિ (જો હોય તો - Optional)</label>
+                <input type="file" id="mainImgInput" accept="image/*" onchange="handleSingleImgUpload(event, 'qMainImg')">
+                <div id="mainImgControls" class="img-fixed-area" style="display:none;">
+                    <div style="font-size:11.5px; font-weight:600; margin-bottom:3px;">
+                        સાઈઝ: <span id="imgScaleVal">60%</span>
+                        <input type="range" id="qMainImgScale" min="10" max="100" value="60" oninput="updateMainImageScale(this.value)" style="width:60%; vertical-align:middle; margin-left:8px;">
+                    </div>
+                    <img id="qMainImgPreview" style="max-height: 110px; width: 60%; object-fit: contain; border:1px solid #ddd; border-radius:4px;">
+                </div>
+            </div>
+
+            <div id="dynamicInputs"></div>
+
+            <div id="optionsWrapper">
+                <label style="margin-top:5px; margin-bottom:3px; font-weight:700;">ઓપ્શન્સ (Options 1 - 4):</label>
+                <div class="grid-2" id="optionsContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN: FULL HEIGHT QUESTION MANAGEMENT -->
+    <div class="column-card">
+        <div class="panel-header">
+            <h3>📋 ઉમેરેલા પ્રશ્નો (<span id="qCount">0</span>)</h3>
+            <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                <button class="btn btn-purple btn-sm" onclick="viewPDF()">👁️ PDF</button>
+                <button class="btn btn-orange btn-sm" onclick="exportPDF_TwoColumn()">📥 A4 PDF</button>
+                <button class="btn btn-green btn-sm" onclick="exportAll169PDF()">🖼️ 16:9 PDF</button>
+            </div>
+        </div>
+
+        <div class="panel-scrollable-body" id="questionsList"></div>
+    </div>
+</div>
+
+<!-- POPUP MODAL 1: PDF, WATERMARK & HEADER SETTINGS (F2) -->
+<div id="pdfSettingsModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>📄 PDF, Watermark & Header Settings <span class="badge">Press F2 to toggle</span></h3>
+            <button class="btn btn-red btn-sm" onclick="closeModal('pdfSettingsModal')">✖</button>
+        </div>
+        <div class="modal-body">
+            <h4 style="margin:0 0 6px 0; font-size:13px; color:#2563eb;">Header Titles:</h4>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>હેડર લાઈન 1</label>
+                    <input type="text" id="pdfHeaderLine1" oninput="saveSettingsLocally()" placeholder="Main Title">
+                </div>
+                <div class="form-group">
+                    <label>હેડર લાઈન 2</label>
+                    <input type="text" id="pdfHeaderLine2" oninput="saveSettingsLocally()" placeholder="Sub-title">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>હેડર લાઈન 3</label>
+                <input type="text" id="pdfHeaderLine3" oninput="saveSettingsLocally()" placeholder="Extra Info">
+            </div>
+
+            <hr style="border:0; border-top:1px solid #e2e8f0; margin:8px 0;">
+            <h4 style="margin:0 0 6px 0; font-size:13px; color:#2563eb;">Images & Watermarks (A4 PDF):</h4>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>હેડર લોગો</label>
+                    <input type="file" id="logoUpload" accept="image/*" onchange="handleLogoUpload(event)">
+                </div>
+                <div class="form-group">
+                    <label>વોટરમાર્ક (Tiled Pattern)</label>
+                    <input type="file" id="watermarkUpload" accept="image/*" onchange="handleWatermarkUpload(event)">
+                </div>
+            </div>
+
+            <hr style="border:0; border-top:1px solid #e2e8f0; margin:8px 0;">
+            <h4 style="margin:0 0 6px 0; font-size:13px; color:#2563eb;">Footer Settings:</h4>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>ફૂટર Left</label>
+                    <input type="text" id="pdfFooterLeft" oninput="saveSettingsLocally()" placeholder="Channel Link">
+                </div>
+                <div class="form-group">
+                    <label>ફૂટર Center</label>
+                    <input type="text" id="pdfFooterCenter" oninput="saveSettingsLocally()" placeholder="Best of Luck">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>ફૂટર Right</label>
+                <input type="text" id="pdfFooterRight" oninput="saveSettingsLocally()" placeholder="Page No">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-green" onclick="closeModal('pdfSettingsModal')">Done & Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- POPUP MODAL: QUESTION BADGE COLOR SETTINGS (F3 - WITH HEX CODE INPUT) -->
+<div id="badgeSettingsModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>🏷️ Question Badge Color Settings <span class="badge">Press F3 to toggle</span></h3>
+            <button class="btn btn-red btn-sm" onclick="closeModal('badgeSettingsModal')">✖</button>
+        </div>
+        <div class="modal-body">
+            <h4 style="margin:0 0 10px 0; font-size:13px; color:#2563eb;">Question Badge Colors (#Hex Code Format):</h4>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Badge Boundary & Text Color</label>
+                    <div class="color-control-group">
+                        <input type="color" id="badgeBorderTextColor" value="#ffffff" oninput="syncColorWithHex('badgeBorderTextColor', 'badgeBorderTextColorHex')">
+                        <input type="text" id="badgeBorderTextColorHex" value="#FFFFFF" maxlength="7" oninput="syncHexWithColor('badgeBorderTextColorHex', 'badgeBorderTextColor')">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Badge Fill Background Color</label>
+                    <div class="color-control-group">
+                        <input type="color" id="badgeBgFillColor" value="#1976d2" oninput="syncColorWithHex('badgeBgFillColor', 'badgeBgFillColorHex')">
+                        <input type="text" id="badgeBgFillColorHex" value="#1976D2" maxlength="7" oninput="syncHexWithColor('badgeBgFillColorHex', 'badgeBgFillColor')">
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:6px; text-align:center;">
+                <span id="badgePreviewSample" style="background:#1976d2; color:#ffffff; font-size:20px; font-weight:700; padding:6px 24px; border-radius:24px; border:2px solid #ffffff; display:inline-block;">Question</span>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-green" onclick="closeModal('badgeSettingsModal')">Done & Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- POPUP MODAL 2: 16:9 PNG FONT, COLOR & BACKGROUND SETTINGS (F4 - WITH HEX CODE INPUT) -->
+<div id="pngSettingsModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>🎨 16:9 PNG Colors, BG & Fonts <span class="badge">Press F4 to toggle</span></h3>
+            <button class="btn btn-red btn-sm" onclick="closeModal('pngSettingsModal')">✖</button>
+        </div>
+        <div class="modal-body">
+            <h4 style="margin:0 0 6px 0; font-size:13px; color:#2563eb;">16:9 Background Image & Solid Color:</h4>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Blank Background Color (#Hex Code)</label>
+                    <div class="color-control-group">
+                        <input type="color" id="pngBgColor" value="#0b0f19" oninput="syncColorWithHex('pngBgColor', 'pngBgColorHex')">
+                        <input type="text" id="pngBgColorHex" value="#0B0F19" maxlength="7" oninput="syncHexWithColor('pngBgColorHex', 'pngBgColor')">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Image Status / Action</label>
+                    <button type="button" class="btn btn-orange btn-sm" style="width:100%; height:34px; justify-content:center;" onclick="removeBgImage()">🗑️ Remove Image / Use Solid Color</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>16:9 બેકગ્રાઉન્ડ ઈમેજ અપલોડ કરો (Optional - જો ઈમેજ રાખવી હોય તો)</label>
+                <input type="file" id="bgUpload" accept="image/*" onchange="handleBgUpload(event)">
+                <span id="bgStatusText" style="font-size:11px; color:#64748b; margin-top:2px; display:block;">હાલમાં: Plain Solid Color Active</span>
+            </div>
+
+            <hr style="border:0; border-top:1px solid #e2e8f0; margin:8px 0;">
+            <h4 style="margin:0 0 6px 0; font-size:13px; color:#2563eb;">Typography & Colors (#Hex Code Format):</h4>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>પ્રશ્ન કલર (Question Color)</label>
+                    <div class="color-control-group">
+                        <input type="color" id="pngQColor" value="#ffffff" oninput="syncColorWithHex('pngQColor', 'pngQColorHex')">
+                        <input type="text" id="pngQColorHex" value="#FFFFFF" maxlength="7" oninput="syncHexWithColor('pngQColorHex', 'pngQColor')">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>પ્રશ્ન સાઈઝ (px)</label>
+                    <input type="number" id="pngQSize" value="38" min="20" max="65" oninput="saveSettingsLocally()">
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>ઓપ્શન કલર (Option Color)</label>
+                    <div class="color-control-group">
+                        <input type="color" id="pngOptColor" value="#ffffff" oninput="syncColorWithHex('pngOptColor', 'pngOptColorHex')">
+                        <input type="text" id="pngOptColorHex" value="#FFFFFF" maxlength="7" oninput="syncHexWithColor('pngOptColorHex', 'pngOptColor')">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>ઓપ્શન સાઈઝ (px)</label>
+                    <input type="number" id="pngOptSize" value="36" min="18" max="55" oninput="saveSettingsLocally()">
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>ઓપ્શન બેજ બોર્ડર & ટેક્સ્ટ કલર</label>
+                    <div class="color-control-group">
+                        <input type="color" id="pngBadgeColor" value="#1976d2" oninput="syncColorWithHex('pngBadgeColor', 'pngBadgeColorHex')">
+                        <input type="text" id="pngBadgeColorHex" value="#1976D2" maxlength="7" oninput="syncHexWithColor('pngBadgeColorHex', 'pngBadgeColor')">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>ઓપ્શન બેજ અંદરનો કલર (Fill Color)</label>
+                    <div class="color-control-group">
+                        <input type="color" id="pngBadgeBgColor" value="#0d2b45" oninput="syncColorWithHex('pngBadgeBgColor', 'pngBadgeBgColorHex')">
+                        <input type="text" id="pngBadgeBgColorHex" value="#0D2B45" maxlength="7" oninput="syncHexWithColor('pngBadgeBgColorHex', 'pngBadgeBgColor')">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-green" onclick="closeModal('pngSettingsModal')">Done & Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- HD 16:9 Hidden Export Frame -->
+<div id="hd-export-container">
+    <div class="ref-question-badge" id="hdQuestionBadge">Question</div>
+    <div class="hd-card-content" id="hd-card-inner"></div>
+</div>
+
+<!-- PREVIEW MODAL FOR PNG & PDF -->
+<div id="previewModal" class="modal-overlay">
+    <div class="preview-modal-content">
+        <h3 id="modalTitle" style="margin-top:0; margin-bottom:8px; font-size:15px;">📄 Preview</h3>
+        <img id="modalPreviewImg" class="modal-img" src="" alt="PNG Preview" style="display:none;">
+        <iframe id="modalPreviewPDF" class="pdf-frame" style="display:none;"></iframe>
+        <div style="margin-top:8px; display:flex; gap:8px;">
+            <button class="btn btn-green" id="downloadModalBtn">📥 Download File</button>
+            <button class="btn btn-red" onclick="closePreviewModal()">❌ Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let questionsArr = [];
+    let customBGData = null;
+    let logoData = null;
+    let watermarkData = null;
+    let preparedTiledWatermarkPNG = null; 
+
+    let currentMainImg = null;
+    let currentMainImgScale = 60;
+    let currentColBImgs = []; 
+
+    let editingIndex = -1;
+
+    const defaultAROptions = {
+        '1': 'A અને R બંને સાચાં છે અને R એ A ની સાચી સમજૂતી છે',
+        '2': 'A અને R બંને સાચાં છે પરંતુ R એ A ની સાચી સમજૂતી નથી',
+        '3': 'A સાચું છે પરંતુ R ખોટું છે',
+        '4': 'A ખોટું છે પરંતુ R સાચું છે'
+    };
+
+    const defaultTwoStatementsOptions = {
+        '1': 'બંને વિધાન I અને વિધાન II સાચાં છે',
+        '2': 'બંને વિધાન I અને વિધાન II ખોટાં છે',
+        '3': 'વિધાન I સાચું છે, પરંતુ વિધાન II ખોટું છે',
+        '4': 'વિધાન I ખોટું છે, પરંતુ વિધાન II સાચું છે'
+    };
+
+    // ==================== INDEXED-DB HIGH CAPACITY STORAGE SYSTEM ====================
+    let db;
+    function initDatabase() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('QuestionStudioDB', 1);
+            request.onupgradeneeded = function(e) {
+                const dbInstance = e.target.result;
+                if (!dbInstance.objectStoreNames.contains('questionsStore')) {
+                    dbInstance.createObjectStore('questionsStore', { keyPath: 'id' });
+                }
+            };
+            request.onsuccess = function(e) {
+                db = e.target.result;
+                resolve(db);
+            };
+            request.onerror = function(e) {
+                console.error("IndexedDB error:", e);
+                reject(e);
+            };
+        });
+    }
+
+    async function saveAllQuestionsToDB() {
+        if (!db) await initDatabase();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('questionsStore', 'readwrite');
+            const store = tx.objectStore('questionsStore');
+            const clearReq = store.clear();
+            clearReq.onsuccess = function() {
+                questionsArr.forEach(q => store.put(q));
+            };
+            tx.oncomplete = function() {
+                saveSettingsLocally();
+                resolve();
+            };
+            tx.onerror = function(err) {
+                console.error("Transaction save error:", err);
+                reject(err);
+            };
+        });
+    }
+
+    async function loadQuestionsFromDB() {
+        if (!db) await initDatabase();
+        return new Promise((resolve) => {
+            const tx = db.transaction('questionsStore', 'readonly');
+            const store = tx.objectStore('questionsStore');
+            const req = store.getAll();
+            req.onsuccess = function(e) {
+                const result = e.target.result;
+                if (result && result.length > 0) {
+                    questionsArr = result;
+                } else {
+                    const legacy = localStorage.getItem('qb_questions');
+                    if (legacy) {
+                        try { questionsArr = JSON.parse(legacy); } catch(err) { questionsArr = []; }
+                    }
+                }
+                resolve(questionsArr);
+            };
+            req.onerror = function() {
+                resolve([]);
+            };
+        });
+    }
+
+    window.onload = async function() {
+        await initDatabase();
+        await loadQuestionsFromDB();
+        loadSettingsLocally();
+        renderQuestionInputs();
+        renderQuestionsList();
+        setupKeyboardShortcuts();
+        updateBadgePreview();
+        updateBgStatusUI();
+    };
+
+    function openModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+        if (modalId === 'badgeSettingsModal') {
+            updateBadgePreview();
+        }
+        if (modalId === 'pngSettingsModal') {
+            updateBgStatusUI();
+        }
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    function setupKeyboardShortcuts() {
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F2') {
+                e.preventDefault();
+                const m = document.getElementById('pdfSettingsModal');
+                m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+            }
+            if (e.key === 'F3') {
+                e.preventDefault();
+                const m = document.getElementById('badgeSettingsModal');
+                const isOpen = m.style.display === 'flex';
+                m.style.display = isOpen ? 'none' : 'flex';
+                if (!isOpen) updateBadgePreview();
+            }
+            if (e.key === 'F4') {
+                e.preventDefault();
+                const m = document.getElementById('pngSettingsModal');
+                const isOpen = m.style.display === 'flex';
+                m.style.display = isOpen ? 'none' : 'flex';
+                if (!isOpen) updateBgStatusUI();
+            }
+            if (e.key === 'Escape') {
+                closeModal('pdfSettingsModal');
+                closeModal('badgeSettingsModal');
+                closeModal('pngSettingsModal');
+                closePreviewModal();
+            }
+
+            const activeElement = document.activeElement;
+            if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                if (e.ctrlKey && e.shiftKey && (e.key === '-' || e.key === '_')) {
+                    e.preventDefault();
+                    applyTagToSelection(activeElement, 'sub');
+                }
+                if (e.ctrlKey && e.shiftKey && (e.key === '+' || e.key === '=')) {
+                    e.preventDefault();
+                    applyTagToSelection(activeElement, 'sup');
+                }
+            }
+        });
+    }
+
+    /* 2-WAY COLOR SYNC FUNCTIONS FOR HEX CODES */
+    function syncColorWithHex(colorPickerId, hexInputId) {
+        const picker = document.getElementById(colorPickerId);
+        const hexInp = document.getElementById(hexInputId);
+        if (picker && hexInp) {
+            hexInp.value = picker.value.toUpperCase();
+        }
+        saveSettingsLocally();
+    }
+
+    function syncHexWithColor(hexInputId, colorPickerId) {
+        const hexInp = document.getElementById(hexInputId);
+        const picker = document.getElementById(colorPickerId);
+        if (!hexInp || !picker) return;
+
+        let val = hexInp.value.trim();
+        if (!val.startsWith('#')) {
+            val = '#' + val;
+        }
+
+        const validHexPattern = /^#([0-9A-Fa-f]{6})$/;
+        if (validHexPattern.test(val)) {
+            picker.value = val;
+            saveSettingsLocally();
+        }
+    }
+
+    function updateBadgePreview() {
+        const borderTextColor = document.getElementById('badgeBorderTextColor')?.value || '#ffffff';
+        const bgFillColor = document.getElementById('badgeBgFillColor')?.value || '#1976d2';
+        const sample = document.getElementById('badgePreviewSample');
+        if (sample) {
+            sample.style.backgroundColor = bgFillColor;
+            sample.style.color = borderTextColor;
+            sample.style.borderColor = borderTextColor;
+        }
+    }
+
+    function updateBgStatusUI() {
+        const status = document.getElementById('bgStatusText');
+        if (!status) return;
+        if (customBGData) {
+            status.innerHTML = `<span style="color:#16a34a; font-weight:700;">✓ Custom Image Active</span>`;
+        } else {
+            status.innerHTML = `<span style="color:#2563eb; font-weight:700;">✓ Plain Solid Color Active</span>`;
+        }
+    }
+
+    function removeBgImage() {
+        customBGData = null;
+        document.getElementById('bgUpload').value = '';
+        saveSettingsLocally();
+        updateBgStatusUI();
+        alert("બેકગ્રાઉન્ડ ઈમેજ દૂર કરવામાં આવી છે. હવે Blank Solid Color લાગુ થશે!");
+    }
+
+    function applyTagToSelection(input, tag) {
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const selectedText = input.value.substring(start, end);
+        const replacement = `<${tag}>${selectedText}</${tag}>`;
+        input.value = input.value.substring(0, start) + replacement + input.value.substring(end);
+        input.focus();
+        if (selectedText.length > 0) {
+            input.setSelectionRange(start, start + replacement.length);
+        } else {
+            input.setSelectionRange(start + tag.length + 2, start + tag.length + 2);
+        }
+    }
+
+    function toRoman(num) {
+        const romanMap = [
+            { val: 10, sym: 'x' },
+            { val: 9, sym: 'ix' },
+            { val: 5, sym: 'v' },
+            { val: 4, sym: 'iv' },
+            { val: 1, sym: 'i' }
+        ];
+        let roman = '';
+        for (let item of romanMap) {
+            while (num >= item.val) {
+                roman += item.sym;
+                num -= item.val;
+            }
+        }
+        return roman;
+    }
+
+    function saveSettingsLocally() {
+        try {
+            const settings = {
+                line1: document.getElementById('pdfHeaderLine1').value,
+                line2: document.getElementById('pdfHeaderLine2').value,
+                line3: document.getElementById('pdfHeaderLine3').value,
+                footerLeft: document.getElementById('pdfFooterLeft').value,
+                footerCenter: document.getElementById('pdfFooterCenter').value,
+                footerRight: document.getElementById('pdfFooterRight').value,
+                pngQColor: document.getElementById('pngQColor')?.value || '#ffffff',
+                pngQSize: document.getElementById('pngQSize')?.value || '38',
+                pngOptColor: document.getElementById('pngOptColor')?.value || '#ffffff',
+                pngOptSize: document.getElementById('pngOptSize')?.value || '36',
+                pngBadgeColor: document.getElementById('pngBadgeColor')?.value || '#1976d2',
+                pngBadgeBgColor: document.getElementById('pngBadgeBgColor')?.value || '#0d2b45',
+                badgeBorderTextColor: document.getElementById('badgeBorderTextColor')?.value || '#ffffff',
+                badgeBgFillColor: document.getElementById('badgeBgFillColor')?.value || '#1976d2',
+                pngBgColor: document.getElementById('pngBgColor')?.value || '#0b0f19'
+            };
+            localStorage.setItem('qb_settings', JSON.stringify(settings));
+            updateBadgePreview();
+            updateBgStatusUI();
+        } catch(e) {}
+    }
+
+    function loadSettingsLocally() {
+        const savedSettings = localStorage.getItem('qb_settings');
+        if (savedSettings) {
+            try {
+                const s = JSON.parse(savedSettings);
+                document.getElementById('pdfHeaderLine1').value = s.line1 || '';
+                document.getElementById('pdfHeaderLine2').value = s.line2 || '';
+                document.getElementById('pdfHeaderLine3').value = s.line3 || '';
+                document.getElementById('pdfFooterLeft').value = s.footerLeft || '';
+                document.getElementById('pdfFooterCenter').value = s.footerCenter || '';
+                document.getElementById('pdfFooterRight').value = s.footerRight || '';
+
+                if (s.pngQColor) {
+                    document.getElementById('pngQColor').value = s.pngQColor;
+                    document.getElementById('pngQColorHex').value = s.pngQColor.toUpperCase();
+                }
+                if (s.pngQSize) document.getElementById('pngQSize').value = s.pngQSize;
+                
+                if (s.pngOptColor) {
+                    document.getElementById('pngOptColor').value = s.pngOptColor;
+                    document.getElementById('pngOptColorHex').value = s.pngOptColor.toUpperCase();
+                }
+                if (s.pngOptSize) document.getElementById('pngOptSize').value = s.pngOptSize;
+                
+                if (s.pngBadgeColor) {
+                    document.getElementById('pngBadgeColor').value = s.pngBadgeColor;
+                    document.getElementById('pngBadgeColorHex').value = s.pngBadgeColor.toUpperCase();
+                }
+                if (s.pngBadgeBgColor) {
+                    document.getElementById('pngBadgeBgColor').value = s.pngBadgeBgColor;
+                    document.getElementById('pngBadgeBgColorHex').value = s.pngBadgeBgColor.toUpperCase();
+                }
+                if (s.badgeBorderTextColor) {
+                    document.getElementById('badgeBorderTextColor').value = s.badgeBorderTextColor;
+                    document.getElementById('badgeBorderTextColorHex').value = s.badgeBorderTextColor.toUpperCase();
+                }
+                if (s.badgeBgFillColor) {
+                    document.getElementById('badgeBgFillColor').value = s.badgeBgFillColor;
+                    document.getElementById('badgeBgFillColorHex').value = s.badgeBgFillColor.toUpperCase();
+                }
+                if (s.pngBgColor) {
+                    document.getElementById('pngBgColor').value = s.pngBgColor;
+                    document.getElementById('pngBgColorHex').value = s.pngBgColor.toUpperCase();
+                }
+            } catch(e) {}
+        }
+    }
+
+    async function clearAllData() {
+        if (confirm("શું તમે ખરેખર બધા જ પ્રશ્નો ડિલીટ કરવા માંગો છો? આ સ્ટેપ પાછો નહીં ખેંચી શકાય!")) {
+            questionsArr = [];
+            await saveAllQuestionsToDB();
+            localStorage.removeItem('qb_questions');
+            renderQuestionsList();
+        }
+    }
+
+    function exportDraftJSON() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(questionsArr));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `Question_Bank_Backup_${Date.now()}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function importDraftJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                if (Array.isArray(importedData)) {
+                    questionsArr = importedData;
+                    await saveAllQuestionsToDB();
+                    renderQuestionsList();
+                    alert("બેકઅપ ફાઈલ સફળતાપૂર્વક લોડ થઈ ગઈ છે!");
+                } else {
+                    alert("ફાઈલનો ફોરમેટ સાચો નથી!");
+                }
+            } catch (err) {
+                alert("ફાઈલ રીડ કરવામાં ભૂલ થઈ!");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function updateMainImageScale(val) {
+        currentMainImgScale = parseInt(val);
+        document.getElementById('imgScaleVal').innerText = val + '%';
+        const preview = document.getElementById('qMainImgPreview');
+        if (preview) {
+            preview.style.width = val + '%';
+        }
+    }
+
+    function handleSingleImgUpload(event, targetKey) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const dataUrl = e.target.result;
+            if (targetKey === 'qMainImg') {
+                currentMainImg = dataUrl;
+                const controls = document.getElementById('mainImgControls');
+                const preview = document.getElementById('qMainImgPreview');
+                controls.style.display = 'block';
+                preview.src = dataUrl;
+                preview.style.width = currentMainImgScale + '%';
+            } else if (targetKey.startsWith('colB_')) {
+                const rowIdx = parseInt(targetKey.replace('colB_', ''));
+                currentColBImgs[rowIdx] = dataUrl;
+                const preview = document.getElementById(`colBImgPreview_${rowIdx}`);
+                if (preview) {
+                    preview.src = dataUrl;
+                    preview.style.display = 'block';
+                }
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function handleBgUpload(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) { 
+                customBGData = evt.target.result;
+                updateBgStatusUI();
+                alert("16:9 બેકગ્રાઉન્ડ ઈમેજ સફળતાપૂર્વક સેટ થઈ ગઈ છે!");
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function handleLogoUpload(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) { logoData = evt.target.result; };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function handleWatermarkUpload(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) { 
+                watermarkData = evt.target.result; 
+                createDiagonalWatermarkPattern(watermarkData);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function createDiagonalWatermarkPattern(imgSrc) {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.src = imgSrc;
+        img.onload = function() {
+            const scaleFactor = 4;
+            const tileWidth = 180 * scaleFactor;
+            const tileHeight = 200 * scaleFactor;
+
+            const tileCanvas = document.createElement('canvas');
+            tileCanvas.width = tileWidth;
+            tileCanvas.height = tileHeight;
+            const ctx = tileCanvas.getContext('2d');
+
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            ctx.clearRect(0, 0, tileWidth, tileHeight);
+            ctx.save();
+            ctx.translate(tileWidth / 2, tileHeight / 2);
+            ctx.rotate(-45 * Math.PI / 180);
+
+            const maxDimension = 120 * scaleFactor; 
+            let drawW = img.width;
+            let drawH = img.height;
+
+            if (drawW > drawH) {
+                drawH = (maxDimension / drawW) * drawH;
+                drawW = maxDimension;
+            } else {
+                drawH = (maxDimension / drawH) * drawH;
+                drawW = maxDimension;
+            }
+
+            ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+            ctx.restore();
+
+            preparedTiledWatermarkPNG = tileCanvas.toDataURL('image/png');
+        };
+    }
+
+    function addMatchRow(valA = null, valB = null, imgB = null) {
+        const matchTableRows = document.getElementById('matchTableRows');
+        if (!matchTableRows) return;
+        const rowIndex = matchTableRows.children.length;
+        const count = rowIndex + 1;
+
+        if (imgB !== null) {
+            currentColBImgs[rowIndex] = imgB;
+        } else if (!currentColBImgs[rowIndex]) {
+            currentColBImgs[rowIndex] = null;
+        }
+        
+        const defaultA = valA !== null ? valA : `${String.fromCharCode(96 + count)}) `;
+        const defaultB = valB !== null ? valB : `${toRoman(count)}) `;
+
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'match-row-compact';
+        rowDiv.innerHTML = `
+            <div>
+                <input type="text" class="colA" value="${defaultA}" placeholder="${String.fromCharCode(96 + count)}) ...">
+            </div>
+            <div style="display:flex; align-items:center; gap:5px;">
+                <input type="text" class="colB" value="${defaultB}" placeholder="${toRoman(count)}) ..." style="flex:1;">
+                <input type="file" accept="image/*" style="width:70px; font-size:10px;" onchange="handleSingleImgUpload(event, 'colB_${rowIndex}')">
+                <img id="colBImgPreview_${rowIndex}" src="${currentColBImgs[rowIndex] || ''}" style="${currentColBImgs[rowIndex] ? 'display:block;' : 'display:none;'} max-height:28px; max-width:35px; border:1px solid #cbd5e1; border-radius:2px; background:#fff; padding:1px; object-fit:contain;">
+            </div>
+        `;
+        matchTableRows.appendChild(rowDiv);
+
+        syncMatchOptionsBoxes();
+    }
+
+    function syncMatchOptionsBoxes() {
+        const matchTableRows = document.getElementById('matchTableRows');
+        if (!matchTableRows) return;
+        const count = matchTableRows.children.length;
+
+        ['1', '2', '3', '4'].forEach(optNum => {
+            const container = document.getElementById(`optMatchBoxContainer_${optNum}`);
+            if (!container) return;
+
+            let existingVals = {};
+            container.querySelectorAll('input').forEach(inp => {
+                existingVals[inp.dataset.colKey] = inp.value;
+            });
+
+            container.innerHTML = '';
+            for (let i = 1; i <= count; i++) {
+                const charKey = String.fromCharCode(96 + i); 
+                const prevVal = existingVals[charKey] || '';
+                const spanBox = document.createElement('div');
+                spanBox.className = 'match-pair-box';
+                spanBox.innerHTML = `<span>${charKey}-</span><input type="text" data-col-key="${charKey}" value="${prevVal}" placeholder="...">`;
+                container.appendChild(spanBox);
+            }
+        });
+    }
+
+    function addStatementRow(val = '') {
+        const stmtContainer = document.getElementById('stmtContainer');
+        const count = stmtContainer.children.length + 1;
+        const romanLabel = `(${toRoman(count)})`;
+        
+        const div = document.createElement('div');
+        div.className = 'dynamic-row';
+        div.innerHTML = `
+            <span style="font-weight:700; font-size:12px; min-width:32px; color:#1e293b;">${romanLabel}</span>
+            <input type="text" class="stmt" value="${val}" placeholder="વિધાન ${romanLabel} નું લખાણ...">
+        `;
+        stmtContainer.appendChild(div);
+    }
+
+    function renderQuestionInputs() {
+        const type = document.getElementById('qType').value;
+        const dynamicDiv = document.getElementById('dynamicInputs');
+        const optContainer = document.getElementById('optionsContainer');
+        const optWrapper = document.getElementById('optionsWrapper');
+        const mainImgLabel = document.getElementById('mainImgLabel');
+        
+        dynamicDiv.innerHTML = '';
+        optContainer.innerHTML = '';
+        currentColBImgs = [];
+
+        if (type === 'figure') {
+            mainImgLabel.innerText = "આકૃતિની ઈમેજ ઉમેરો (Upload Figure Image)";
+        } else if (type === 'full_image') {
+            mainImgLabel.innerText = "આખો પ્રશ્ન ઈમેજમાં (Full Question Image)";
+        } else {
+            mainImgLabel.innerText = "પ્રશ્નની ઈમેજ (જો હોય તો - Optional)";
+        }
+
+        if (type === 'full_image') {
+            optWrapper.style.display = 'none';
+            return;
+        } else {
+            optWrapper.style.display = 'block';
+        }
+
+        if (type === 'match') {
+            dynamicDiv.innerHTML = `
+                <div class="grid-2" style="margin-bottom: 4px;">
+                    <div><label>કોલમ - I હેડર</label><input type="text" id="col1Header" placeholder="Column - I"></div>
+                    <div><label>કોલમ - II હેડર</label><input type="text" id="col2Header" placeholder="Column - II"></div>
+                </div>
+                <div id="matchTableRows"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:3px;">
+                    <button type="button" class="btn btn-sm btn-orange" onclick="addMatchRow()">+ Extra Row</button>
+                    <input type="text" id="bottomText" placeholder="પ્રશ્ન લાઈન (ઉદા. યોગ્ય જોડ પસંદ કરો)..." style="width:75%; padding:4px 7px;">
+                </div>
+            `;
+            
+            ['1', '2', '3', '4'].forEach(opt => {
+                optContainer.innerHTML += `
+                    <div class="form-group" style="background:#f8fafc; padding:4px 6px; border-radius:4px; border:1px solid #e2e8f0; margin-bottom:3px;">
+                        <label style="font-size:11px; margin-bottom:2px;">Option (${opt})</label>
+                        <div id="optMatchBoxContainer_${opt}" style="display:flex; flex-wrap:wrap; gap:2px;"></div>
+                    </div>
+                `;
+            });
+
+            addMatchRow(); addMatchRow(); addMatchRow();
+        } else if (type === 'assertion') {
+            dynamicDiv.innerHTML = `
+                <div class="form-group">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-weight:bold; font-size:12.5px; color:#1e293b; white-space:nowrap;">વિધાન (A):</span>
+                        <input type="text" id="assertA" placeholder="વિધાનનું લખાણ અહીં લખો...">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-weight:bold; font-size:12.5px; color:#1e293b; white-space:nowrap;">કારણ (R):</span>
+                        <input type="text" id="reasonR" placeholder="કારણનું લખાણ અહીં લખો...">
+                    </div>
+                </div>
+            `;
+
+            ['1', '2', '3', '4'].forEach(opt => {
+                optContainer.innerHTML += `
+                    <div class="form-group" style="background:#f8fafc; padding:5px 7px; border-radius:4px; border:1px solid #e2e8f0; margin-bottom:3px;">
+                        <label style="font-size:11px; margin-bottom:2px;">Option (${opt})</label>
+                        <input type="text" id="optTxt_${opt}" value="${defaultAROptions[opt]}">
+                    </div>
+                `;
+            });
+        } else if (type === 'two_statements') {
+            dynamicDiv.innerHTML = `
+                <div class="form-group">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-weight:bold; font-size:12.5px; color:#1e293b; white-space:nowrap;">વિધાન I:</span>
+                        <input type="text" id="stmt1Input" placeholder="વિધાન I નું લખાણ અહીં લખો...">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-weight:bold; font-size:12.5px; color:#1e293b; white-space:nowrap;">વિધાન II:</span>
+                        <input type="text" id="stmt2Input" placeholder="વિધાન II નું લખાણ અહીં લખો...">
+                    </div>
+                </div>
+            `;
+
+            ['1', '2', '3', '4'].forEach(opt => {
+                optContainer.innerHTML += `
+                    <div class="form-group" style="background:#f8fafc; padding:5px 7px; border-radius:4px; border:1px solid #e2e8f0; margin-bottom:3px;">
+                        <label style="font-size:11px; margin-bottom:2px;">Option (${opt})</label>
+                        <input type="text" id="optTxt_${opt}" value="${defaultTwoStatementsOptions[opt]}">
+                    </div>
+                `;
+            });
+        } else {
+            if (type === 'statement') {
+                dynamicDiv.innerHTML = `
+                    <label>વિધાનો (Statements - Automatic Roman Prefix)</label>
+                    <div id="stmtContainer"></div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:3px;">
+                        <button type="button" class="btn btn-sm btn-orange" onclick="addStatementRow()">+ નવુ વિધાન</button>
+                        <input type="text" id="bottomText" placeholder="પ્રશ્ન લાઈન (ઉદા. સાચા વિધાનો પસંદ કરો)..." style="width:75%; padding:4px 7px;">
+                    </div>
+                `;
+                addStatementRow(); addStatementRow(); addStatementRow();
+            }
+
+            ['1', '2', '3', '4'].forEach(opt => {
+                optContainer.innerHTML += `
+                    <div class="form-group" style="background:#f8fafc; padding:5px 7px; border-radius:4px; border:1px solid #e2e8f0; margin-bottom:3px;">
+                        <label style="font-size:11px; margin-bottom:2px;">Option (${opt})</label>
+                        <input type="text" id="optTxt_${opt}" placeholder="ઓપ્શન (${opt}) નું લખાણ...">
+                    </div>
+                `;
+            });
+        }
+    }
+
+    async function saveQuestion() {
+        const type = document.getElementById('qType').value;
+        const qText = document.getElementById('qText').value.trim();
+        const customNum = document.getElementById('qNumInput').value.trim();
+        const pyqText = document.getElementById('pyqInput').value.trim();
+
+        if (!qText && !currentMainImg && type !== 'assertion' && type !== 'two_statements') { 
+            alert("કૃપા કરીને પ્રશ્નનું લખાણ અથવા ઈમેજ ઉમેરો!"); 
+            return; 
+        }
+
+        let details = {};
+
+        if (type === 'match') {
+            const colA = Array.from(document.querySelectorAll('.colA')).map(i => i.value).filter(v => v !== "");
+            const colB = Array.from(document.querySelectorAll('.colB')).map(i => i.value);
+            const title1 = document.getElementById('col1Header').value.trim() || 'Column - I';
+            const title2 = document.getElementById('col2Header').value.trim() || 'Column - II';
+            const bottomText = document.getElementById('bottomText')?.value.trim() || '';
+            
+            const totalRows = Math.max(colA.length, colB.length);
+            const cleanedColBImgs = [];
+            for (let i = 0; i < totalRows; i++) {
+                cleanedColBImgs.push(currentColBImgs[i] || null);
+            }
+
+            details = { 
+                title1, 
+                title2, 
+                colA, 
+                colB, 
+                colBImgs: cleanedColBImgs, 
+                bottomText 
+            };
+        } else if (type === 'assertion') {
+            details = { 
+                A: document.getElementById('assertA')?.value.trim() || '', 
+                R: document.getElementById('reasonR')?.value.trim() || '' 
+            };
+        } else if (type === 'two_statements') {
+            details = { 
+                stmt1: document.getElementById('stmt1Input')?.value.trim() || '', 
+                stmt2: document.getElementById('stmt2Input')?.value.trim() || '' 
+            };
+        } else if (type === 'statement') {
+            const bottomText = document.getElementById('bottomText')?.value.trim() || '';
+            details = { 
+                stmts: Array.from(document.querySelectorAll('.stmt')).map(i => i.value.trim()).filter(v => v !== ""),
+                bottomText: bottomText
+            };
+        }
+
+        let formattedOptions = {};
+        if (type !== 'full_image') {
+            ['1', '2', '3', '4'].forEach(opt => {
+                if (type === 'match') {
+                    const boxContainer = document.getElementById(`optMatchBoxContainer_${opt}`);
+                    let parts = [];
+                    if (boxContainer) {
+                        boxContainer.querySelectorAll('input').forEach(inp => {
+                            const k = inp.dataset.colKey;
+                            const val = inp.value.trim();
+                            if (val) {
+                                parts.push(`${k} - ${val}`);
+                            }
+                        });
+                    }
+                    formattedOptions[opt] = { text: parts.join(', ') };
+                } else {
+                    formattedOptions[opt] = { text: document.getElementById(`optTxt_${opt}`)?.value || '' };
+                }
+            });
+        }
+
+        const qObj = {
+            id: editingIndex >= 0 ? questionsArr[editingIndex].id : Date.now(),
+            customNum: customNum,
+            pyq: pyqText,
+            type: type,
+            text: qText,
+            mainImg: currentMainImg,
+            mainImgScale: currentMainImgScale,
+            details: details,
+            options: formattedOptions
+        };
+
+        if (editingIndex >= 0) {
+            questionsArr[editingIndex] = qObj;
+            editingIndex = -1;
+            document.getElementById('saveBtn').innerText = "💾 સેવ કરો";
+            document.getElementById('cancelEditBtn').style.display = "none";
+            document.getElementById('formTitle').innerText = "✏️ પ્રશ્ન ઉમેરો / એડિટ કરો";
+        } else {
+            questionsArr.push(qObj);
+        }
+
+        await saveAllQuestionsToDB();
+        resetForm();
+        renderQuestionsList();
+    }
+
+    function editQuestion(idx) {
+        editingIndex = idx;
+        const q = questionsArr[idx];
+
+        document.getElementById('formTitle').innerText = `✏️ પ્રશ્ન સુધારો (${q.customNum || 'Q.' + (idx + 1)})`;
+        document.getElementById('saveBtn').innerText = "🔄 અપડેટ કરો";
+        document.getElementById('cancelEditBtn').style.display = "inline-flex";
+
+        document.getElementById('qNumInput').value = q.customNum || '';
+        document.getElementById('pyqInput').value = q.pyq || '';
+        document.getElementById('qType').value = q.type;
+        renderQuestionInputs();
+
+        document.getElementById('qText').value = q.text || '';
+        
+        currentMainImg = q.mainImg || null;
+        currentMainImgScale = q.mainImgScale || 60;
+        document.getElementById('qMainImgScale').value = currentMainImgScale;
+        document.getElementById('imgScaleVal').innerText = currentMainImgScale + '%';
+
+        if (currentMainImg) {
+            document.getElementById('mainImgControls').style.display = 'block';
+            const preview = document.getElementById('qMainImgPreview');
+            preview.src = currentMainImg;
+            preview.style.width = currentMainImgScale + '%';
+        } else {
+            document.getElementById('mainImgControls').style.display = 'none';
+        }
+
+        if (q.type === 'match') {
+            document.getElementById('col1Header').value = q.details.title1 || '';
+            document.getElementById('col2Header').value = q.details.title2 || '';
+            if (document.getElementById('bottomText')) {
+                document.getElementById('bottomText').value = q.details.bottomText || '';
+            }
+            const matchTableRows = document.getElementById('matchTableRows');
+            matchTableRows.innerHTML = '';
+            currentColBImgs = [...(q.details.colBImgs || [])];
+
+            const maxRows = Math.max(q.details.colA.length, q.details.colB.length);
+            for (let r = 0; r < maxRows; r++) {
+                addMatchRow(
+                    q.details.colA[r] !== undefined ? q.details.colA[r] : '', 
+                    q.details.colB[r] !== undefined ? q.details.colB[r] : '',
+                    currentColBImgs[r] || null
+                );
+            }
+
+            ['1', '2', '3', '4'].forEach(opt => {
+                const optText = (q.options[opt]?.text) || (q.options[String.fromCharCode(64 + parseInt(opt))]?.text) || '';
+                const parts = optText.split(',').map(s => s.trim());
+                let pairMap = {};
+                parts.forEach(p => {
+                    const [k, v] = p.split('-').map(x => x.trim());
+                    if (k && v) pairMap[k] = v;
+                });
+
+                const boxContainer = document.getElementById(`optMatchBoxContainer_${opt}`);
+                if (boxContainer) {
+                    boxContainer.querySelectorAll('input').forEach(inp => {
+                        const k = inp.dataset.colKey;
+                        if (pairMap[k]) inp.value = pairMap[k];
+                    });
+                }
+            });
+
+        } else if (q.type === 'assertion') {
+            document.getElementById('assertA').value = q.details.A || '';
+            document.getElementById('reasonR').value = q.details.R || '';
+            ['1', '2', '3', '4'].forEach(opt => {
+                const val = (q.options[opt]?.text) || (q.options[String.fromCharCode(64 + parseInt(opt))]?.text) || defaultAROptions[opt];
+                if (document.getElementById(`optTxt_${opt}`)) document.getElementById(`optTxt_${opt}`).value = val;
+            });
+        } else if (q.type === 'two_statements') {
+            document.getElementById('stmt1Input').value = q.details.stmt1 || '';
+            document.getElementById('stmt2Input').value = q.details.stmt2 || '';
+            ['1', '2', '3', '4'].forEach(opt => {
+                const val = (q.options[opt]?.text) || (q.options[String.fromCharCode(64 + parseInt(opt))]?.text) || defaultTwoStatementsOptions[opt];
+                if (document.getElementById(`optTxt_${opt}`)) document.getElementById(`optTxt_${opt}`).value = val;
+            });
+        } else if (q.type === 'statement') {
+            if (document.getElementById('bottomText')) {
+                document.getElementById('bottomText').value = q.details.bottomText || '';
+            }
+            const stmtContainer = document.getElementById('stmtContainer');
+            stmtContainer.innerHTML = '';
+            q.details.stmts.forEach(s => addStatementRow(s));
+            ['1', '2', '3', '4'].forEach(opt => {
+                const val = (q.options[opt]?.text) || (q.options[String.fromCharCode(64 + parseInt(opt))]?.text) || '';
+                if (document.getElementById(`optTxt_${opt}`)) document.getElementById(`optTxt_${opt}`).value = val;
+            });
+        } else if (q.type !== 'full_image') {
+            ['1', '2', '3', '4'].forEach(opt => {
+                const val = (q.options[opt]?.text) || (q.options[String.fromCharCode(64 + parseInt(opt))]?.text) || '';
+                if (document.getElementById(`optTxt_${opt}`)) document.getElementById(`optTxt_${opt}`).value = val;
+            });
+        }
+    }
+
+    function cancelEdit() {
+        editingIndex = -1;
+        document.getElementById('saveBtn').innerText = "💾 સેવ કરો";
+        document.getElementById('cancelEditBtn').style.display = "none";
+        document.getElementById('formTitle').innerText = "✏️ પ્રશ્ન ઉમેરો / એડિટ કરો";
+        resetForm();
+    }
+
+    async function deleteQuestion(idx) {
+        if (confirm("શું તમે આ પ્રશ્ન ડિલીટ કરવા માંગો છો?")) {
+            questionsArr.splice(idx, 1);
+            await saveAllQuestionsToDB();
+            renderQuestionsList();
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('qText').value = '';
+        document.getElementById('qNumInput').value = '';
+        document.getElementById('pyqInput').value = '';
+        document.getElementById('mainImgControls').style.display = 'none';
+        document.getElementById('mainImgInput').value = '';
+        currentMainImg = null;
+        currentMainImgScale = 60;
+        document.getElementById('qMainImgScale').value = 60;
+        document.getElementById('imgScaleVal').innerText = '60%';
+        currentColBImgs = [];
+        renderQuestionInputs();
+    }
+
+    function renderQuestionsList() {
+        const container = document.getElementById('questionsList');
+        document.getElementById('qCount').innerText = questionsArr.length;
+        container.innerHTML = '';
+
+        questionsArr.forEach((q, idx) => {
+            const displayNum = q.customNum ? q.customNum : `Q.${idx + 1}`;
+            let displayText = q.text ? q.text : "";
+            if (!displayText && q.type === 'assertion') {
+                displayText = `(A) ${q.details.A ? q.details.A.substring(0, 30) + '...' : ''}`;
+            } else if (!displayText && q.type === 'two_statements') {
+                displayText = `I: ${q.details.stmt1 ? q.details.stmt1.substring(0, 30) + '...' : ''}`;
+            } else if (!displayText) {
+                displayText = "(Image Based Question)";
+            }
+
+            const pyqBadge = q.pyq ? `<span style="background:#e0f2fe; color:#0284c7; padding:1px 5px; border-radius:3px; font-size:10px; margin-left:6px; font-weight:700;">${q.pyq}</span>` : '';
+
+            container.innerHTML += `
+                <div class="q-item-card">
+                    <div style="font-size:12px; line-height:1.3; margin-bottom:4px; display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <strong>${displayNum} (${q.type.toUpperCase()}):</strong> ${displayText}
+                        </div>
+                        ${pyqBadge}
+                    </div>
+                    <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                        <button class="btn btn-purple btn-sm" onclick="view169PNG(${idx})">👁️ PNG</button>
+                        <button class="btn btn-blue btn-sm" onclick="editQuestion(${idx})">✏️ Edit</button>
+                        <button class="btn btn-orange btn-sm" onclick="download169PNG(${idx})">🖼️ Download</button>
+                        <button class="btn btn-red btn-sm" onclick="deleteQuestion(${idx})">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    /* REFERENCE LAYOUT MATCHED CANVAS GENERATOR (UPDATED: SOLID BLANK BACKGROUND OPTION) */
+    async function generate169Canvas(index) {
+        const q = questionsArr[index];
+        const container = document.getElementById('hd-export-container');
+        const inner = document.getElementById('hd-card-inner');
+        const badgeEl = document.getElementById('hdQuestionBadge');
+
+        const qColor = document.getElementById('pngQColor')?.value || '#ffffff';
+        const qSize = document.getElementById('pngQSize')?.value || '38';
+        const optColor = document.getElementById('pngOptColor')?.value || '#ffffff';
+        const optSize = document.getElementById('pngOptSize')?.value || '36';
+        
+        // Option numbered circles colors
+        const badgeColor = document.getElementById('pngBadgeColor')?.value || '#1976d2';
+        const badgeBgColor = document.getElementById('pngBadgeBgColor')?.value || '#0d2b45';
+
+        // Main Question Badge Colors (F3 Controlled)
+        const qBadgeBorderText = document.getElementById('badgeBorderTextColor')?.value || '#ffffff';
+        const qBadgeBgFill = document.getElementById('badgeBgFillColor')?.value || '#1976d2';
+
+        // Blank Solid BG Color (F4 Controlled)
+        const solidBgColor = document.getElementById('pngBgColor')?.value || '#0b0f19';
+
+        if (badgeEl) {
+            badgeEl.style.backgroundColor = qBadgeBgFill;
+            badgeEl.style.color = qBadgeBorderText;
+            badgeEl.style.borderColor = qBadgeBorderText;
+        }
+
+        // Apply Image if uploaded, otherwise use Blank Solid Color
+        if (customBGData) {
+            container.style.backgroundImage = `url('${customBGData}')`;
+            container.style.backgroundColor = 'transparent';
+        } else {
+            container.style.backgroundImage = 'none';
+            container.style.backgroundColor = solidBgColor;
+        }
+
+        let pyqHTML = q.pyq ? `<span style="margin-left: auto; font-size:${parseInt(qSize)-10}px; background: rgba(25,118,210,0.2); border: 1.5px solid rgba(33,150,243,0.6); color: #ffffff; padding: 4px 16px; border-radius: 8px; font-weight: 700; white-space: nowrap; align-self: flex-start;">${q.pyq}</span>` : '';
+
+        // Reference Question Box Format (Pure Bold: 700)
+        let contentHTML = `<div style="display:flex; align-items:flex-start; font-weight:700; color:${qColor}; margin-bottom:25px; font-size:${qSize}px; line-height:1.45; width: 100%;">
+            <div style="flex-grow: 1; color:${qColor}; padding-right: 15px; font-weight:700;">${q.text ? q.text : ''}</div>
+            ${pyqHTML}
+        </div>`;
+
+        let subContentHTML = '';
+
+        // Helper function for Option items using numbered badges 1, 2, 3, 4 with unified border/text color & custom fill color
+        function renderSingleOption(optKey) {
+            const opt = q.options[optKey] || q.options[String.fromCharCode(64 + parseInt(optKey))];
+            if (!opt || !opt.text) return '';
+            return `<div style="display:flex; align-items:center; gap:24px;">
+                <span style="width: 68px; height: 68px; border: 4px solid ${badgeColor}; color: ${badgeColor}; background-color: ${badgeBgColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${optKey}</span>
+                <span style="font-size:${optSize}px; color:${optColor}; line-height:1.35; font-weight:700;">${opt.text}</span>
+            </div>`;
+        }
+
+        // ================= FIGURE TYPE QUESTION: 2-COLUMN LAYOUT =================
+        if (q.type === 'figure') {
+            const figureImgHTML = q.mainImg ? `<div style="flex: 1; display: flex; justify-content: center; align-items: center; padding-right: 25px;">
+                <img src="${q.mainImg}" style="max-height: 540px; max-width: 100%; width: ${q.mainImgScale || 75}%; object-fit: contain; border-radius: 8px;">
+            </div>` : `<div style="flex: 1;"></div>`;
+
+            let optionsColumnHTML = `<div style="flex: 1.1; display: flex; flex-direction: column; justify-content: center; gap: 26px; padding-left: 20px;">`;
+            ['1', '2', '3', '4'].forEach(k => {
+                optionsColumnHTML += renderSingleOption(k);
+            });
+            optionsColumnHTML += `</div>`;
+
+            subContentHTML += `<div style="display: flex; width: 100%; height: 100%; align-items: center; justify-content: space-between; margin-top: 20px;">
+                ${figureImgHTML}
+                ${optionsColumnHTML}
+            </div>`;
+        } 
+        else {
+            // General Main Image (for non-figure types)
+            if (q.mainImg) {
+                const imgWidthPx = Math.round((1200 * (q.mainImgScale || 60)) / 100);
+                subContentHTML += `<div style="margin: 10px 0 20px 0; width: 100%; display: flex; justify-content: flex-start; align-items: center;">
+                    <img src="${q.mainImg}" style="max-height: 400px; width: ${imgWidthPx}px; object-fit: contain; border-radius:8px;">
+                </div>`;
+            }
+
+            if (q.type === 'match') {
+                const head1 = q.details.title1 || 'Column - I';
+                const head2 = q.details.title2 || 'Column - II';
+                // MATCH TABLE DETAILS: Routed to qColor and Pure Bold (700)
+                subContentHTML += `<table class="export-match-table" style="color:${qColor}; font-weight:700;">
+                    <thead><tr><th style="color:${qColor}; font-weight:700;">${head1}</th><th style="color:${qColor}; font-weight:700;">${head2}</th></tr></thead><tbody>`;
+                const maxRows = Math.max(q.details.colA.length, q.details.colB.length);
+                for (let r = 0; r < maxRows; r++) {
+                    const colBImg = (q.details.colBImgs && q.details.colBImgs[r]) ? q.details.colBImgs[r] : null;
+                    subContentHTML += `<tr>
+                        <td style="color:${qColor}; font-weight:700;">${q.details.colA[r] || ''}</td>
+                        <td style="color:${qColor}; font-weight:700;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%;">
+                                <span style="flex:1; font-weight:700;">${q.details.colB[r] || ''}</span>
+                                ${colBImg ? `<div class="colb-img-container" style="flex-shrink:0;"><img src="${colBImg}" style="max-height:85px; max-width:240px; object-fit:contain; display:block;"></div>` : ''}
+                            </div>
+                        </td>
+                    </tr>`;
+                }
+                subContentHTML += `</tbody></table>`;
+                if (q.details.bottomText) {
+                    subContentHTML += `<div style="font-size:${qSize}px; font-weight:700; margin: 15px 0 5px 0; color:${qColor};">${q.details.bottomText}</div>`;
+                }
+
+                // MATCH TYPE: Options (1, 2, 3, 4) routed to optColor
+                subContentHTML += `<div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 50px; row-gap: 22px; font-size:${optSize}px; font-weight:700; margin-top: 40px; color:${optColor}; width:100%;">
+                    <div>${renderSingleOption('1')}</div>
+                    <div>${renderSingleOption('2')}</div>
+                    <div>${renderSingleOption('3')}</div>
+                    <div>${renderSingleOption('4')}</div>
+                </div>`;
+            } 
+            else if (q.type === 'assertion') {
+                // ASSERTION - REASON: Routed to qColor and Pure Bold (700)
+                subContentHTML += `<div style="font-size:${qSize}px; margin-bottom:20px; font-weight:700; line-height:1.5; color:${qColor};">
+                    <div style="margin-bottom:12px; display:flex; gap:10px;">
+                        <b style="color:${qColor}; white-space:nowrap; font-weight:800;">વિધાન (A):</b>
+                        <span style="font-weight:700;">${q.details.A}</span>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <b style="color:${qColor}; white-space:nowrap; font-weight:800;">કારણ (R):</b>
+                        <span style="font-weight:700;">${q.details.R}</span>
+                    </div>
+                </div>`;
+            } 
+            else if (q.type === 'two_statements') {
+                // STATEMENTS I & II: Routed to qColor and Pure Bold (700)
+                subContentHTML += `<div style="font-size:${qSize}px; margin-bottom:20px; font-weight:700; line-height:1.5; color:${qColor};">
+                    <div style="margin-bottom:12px; display:flex; gap:10px;">
+                        <b style="color:${qColor}; white-space:nowrap; font-weight:800;">વિધાન I:</b>
+                        <span style="font-weight:700;">${q.details.stmt1}</span>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <b style="color:${qColor}; white-space:nowrap; font-weight:800;">વિધાન II:</b>
+                        <span style="font-weight:700;">${q.details.stmt2}</span>
+                    </div>
+                </div>`;
+            }
+            else if (q.type === 'statement') {
+                // MULTIPLE STATEMENTS: Routed to qColor and Pure Bold (700)
+                subContentHTML += `<div style="font-size:${qSize}px; margin-bottom:20px; font-weight:700; line-height:1.5; color:${qColor};">
+                    ${q.details.stmts.map((s, idx) => `<div style="margin-bottom:8px;"><b style="color:${qColor}; font-weight:800;">(${toRoman(idx + 1)})</b> <span style="font-weight:700;">${s}</span></div>`).join('')}
+                </div>`;
+                if (q.details.bottomText) {
+                    subContentHTML += `<div style="font-size:${qSize}px; font-weight:700; margin: 15px 0 5px 0; color:${qColor};">${q.details.bottomText}</div>`;
+                }
+            }
+
+            // Normal Vertical Stack Options for non-match, non-figure questions (routed to optColor)
+            if (q.type !== 'full_image' && q.type !== 'match') {
+                subContentHTML += `<div style="display:flex; flex-direction:column; gap:26px; font-size:${optSize}px; font-weight:700; margin-top:45px; color:${optColor}; width:100%;">`;
+                ['1', '2', '3', '4'].forEach(k => {
+                    subContentHTML += renderSingleOption(k);
+                });
+                subContentHTML += `</div>`;
+            }
+        }
+
+        contentHTML += `<div style="width:100%; flex: 1; display: flex; flex-direction: column;">${subContentHTML}</div>`;
+        inner.innerHTML = contentHTML;
+
+        const allImgs = Array.from(container.querySelectorAll('img'));
+        await Promise.all(allImgs.map(img => {
+            if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+            return new Promise(resolve => {
+                img.onload = resolve;
+                img.onerror = resolve;
+            });
+        }));
+        await new Promise(r => setTimeout(r, 120));
+
+        return await html2canvas(container, { 
+            width: 1920, 
+            height: 1080, 
+            scale: 2, 
+            useCORS: true, 
+            allowTaint: true 
+        });
+    }
+
+    async function exportAll169PDF() {
+        if (questionsArr.length === 0) { 
+            alert("PDF બનાવવા માટે ઓછામાં ઓછો એક પ્રશ્ન હોવો જરૂરી છે!"); 
+            return; 
+        }
+
+        const confirmDownload = confirm(`કુલ ${questionsArr.length} પ્રશ્નોની 16:9 Presentation PDF બનાવવાનું શરૂ કરીએ?`);
+        if (!confirmDownload) return;
+
+        const { jsPDF } = window.jspdf;
+        const pdfWidth = 297;
+        const pdfHeight = (297 * 9) / 16; 
+
+        const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: [pdfWidth, pdfHeight]
+        });
+
+        for (let i = 0; i < questionsArr.length; i++) {
+            const canvas = await generate169Canvas(i);
+            const imgData = canvas.toDataURL('image/jpeg', 0.92);
+
+            if (i > 0) {
+                pdf.addPage([pdfWidth, pdfHeight], 'landscape');
+            }
+
+            pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+        }
+
+        pdf.save(`Questions_16x9_Presentation_${Date.now()}.pdf`);
+    }
+
+    async function view169PNG(index) {
+        const canvas = await generate169Canvas(index);
+        const dataUrl = canvas.toDataURL('image/png');
+        
+        const modal = document.getElementById('previewModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalImg = document.getElementById('modalPreviewImg');
+        const modalPDF = document.getElementById('modalPreviewPDF');
+        const downloadBtn = document.getElementById('downloadModalBtn');
+        
+        modalTitle.innerText = "🖼️ 16:9 PNG Preview";
+        modalImg.src = dataUrl;
+        modalImg.style.display = 'block';
+        modalPDF.style.display = 'none';
+
+        downloadBtn.onclick = function() {
+            downloadImageFromUrl(dataUrl, index);
+        };
+        
+        modal.style.display = 'flex';
+    }
+
+    async function generatePDFDoc() {
+        if (questionsArr.length === 0) { alert("PDF બનાવવા માટે પ્રશ્નો ઉમેરો!"); return null; }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        const line1 = document.getElementById('pdfHeaderLine1').value || "Maharashtra State Board of Secondary and Higher Secondary Education, Pune";
+        const line2 = document.getElementById('pdfHeaderLine2').value || "Sub. : Biology (56)";
+        const line3 = document.getElementById('pdfHeaderLine3').value || "Std. XII";
+        
+        const footerLeft = document.getElementById('pdfFooterLeft').value || "";
+        const footerCenter = document.getElementById('pdfFooterCenter').value || "";
+        const footerRight = document.getElementById('pdfFooterRight').value || "";
+
+        const pageWidth = 210;
+        const pageHeight = 297;
+        const margin = 10;
+        
+        const headerTop = margin;
+        const headerHeight = 30;
+        const headerWidth = pageWidth - (margin * 2);
+        
+        const contentTop = headerTop + headerHeight + 5;
+        const footerBottom = pageHeight - margin;
+        const contentBottom = footerBottom - 8;
+        
+        const colWidth = (pageWidth - (margin * 3)) / 2;
+
+        let currentCol = 0;
+        let yPos = contentTop;
+
+        function drawHeaderFooterWatermark(pdfDoc, pageNum, totalPages) {
+            const watermarkImg = preparedTiledWatermarkPNG || watermarkData;
+            if (watermarkImg) {
+                pdfDoc.saveGraphicsState();
+                pdfDoc.setGState(new pdfDoc.GState({ opacity: 0.30 })); 
+                
+                const printWidth = pageWidth - (margin * 2);
+                const tileW = printWidth / 4; 
+                const tileH = 65; 
+
+                for (let x = margin; x < pageWidth - margin - 1; x += tileW) {
+                    for (let y = contentTop; y < contentBottom - 10; y += tileH) {
+                        pdfDoc.addImage(watermarkImg, 'PNG', x, y, tileW, tileH);
+                    }
+                }
+                pdfDoc.restoreGraphicsState();
+            } else if (logoData) {
+                pdfDoc.saveGraphicsState();
+                pdfDoc.setGState(new pdfDoc.GState({ opacity: 0.20 }));
+                pdfDoc.addImage(logoData, 'PNG', (pageWidth - 110)/2, (pageHeight - 110)/2, 110, 110);
+                pdfDoc.restoreGraphicsState();
+            }
+
+            pdfDoc.setDrawColor(0, 0, 0);
+            pdfDoc.setLineWidth(0.4);
+            pdfDoc.roundedRect(headerTop, headerTop, headerWidth, headerHeight, 3, 3);
+
+            if (logoData) {
+                pdfDoc.addImage(logoData, 'PNG', margin + 1, headerTop + 0.5, 29, 29);
+            }
+
+            const textCenterPos = logoData ? margin + 30 + ((headerWidth - 30) / 2) : margin + (headerWidth / 2);
+
+            pdfDoc.setFont("Noto Sans Gujarati", "bold");
+            pdfDoc.setTextColor(0, 100, 0);
+            pdfDoc.setFontSize(17);
+            pdfDoc.text(line1, textCenterPos, headerTop + 9.5, { align: 'center' });
+
+            pdfDoc.setTextColor(0, 0, 139);
+            pdfDoc.setFontSize(14);
+            pdfDoc.text(line2, textCenterPos, headerTop + 18, { align: 'center' });
+
+            pdfDoc.setTextColor(0, 0, 139);
+            pdfDoc.setFontSize(14);
+            pdfDoc.text(line3, textCenterPos, headerTop + 25.5, { align: 'center' });
+
+            pdfDoc.setTextColor(0, 0, 0);
+            pdfDoc.setLineWidth(0.3);
+            pdfDoc.line(margin + colWidth + (margin/2), contentTop, margin + colWidth + (margin/2), contentBottom);
+
+            pdfDoc.setFontSize(9);
+            pdfDoc.setFont("Noto Sans Gujarati", "normal");
+            pdfDoc.line(margin, footerBottom - 4, pageWidth - margin, footerBottom - 4);
+            
+            if (footerLeft) {
+                if (footerLeft.includes("http://") || footerLeft.includes("https://")) {
+                    pdfDoc.setTextColor(0, 0, 255);
+                    pdfDoc.textWithLink(footerLeft, margin, footerBottom, { url: footerLeft });
+                } else {
+                    pdfDoc.setTextColor(0, 0, 0);
+                    pdfDoc.text(footerLeft, margin, footerBottom);
+                }
+            }
+
+            if (footerCenter) {
+                pdfDoc.setTextColor(0, 0, 0);
+                pdfDoc.text(footerCenter, pageWidth / 2, footerBottom, { align: 'center' });
+            }
+
+            if (footerRight) {
+                pdfDoc.setTextColor(0, 0, 0);
+                let finalRightText = footerRight;
+                if (footerRight.toLowerCase().includes("page")) {
+                    finalRightText = `Page ${pageNum} of ${totalPages}`;
+                } else {
+                    finalRightText = `${footerRight} ${pageNum} of ${totalPages}`;
+                }
+                pdfDoc.text(finalRightText, pageWidth - margin, footerBottom, { align: 'right' });
+            }
+        }
+
+        function moveToNextColumnOrPage() {
+            if (currentCol === 0) {
+                currentCol = 1;
+                yPos = contentTop;
+            } else {
+                doc.addPage();
+                currentCol = 0;
+                yPos = contentTop;
+            }
+        }
+
+        async function renderAndAppendChunk(htmlContent) {
+            const tempDiv = document.createElement('div');
+            tempDiv.style.width = '350px';
+            tempDiv.style.padding = '0px';
+            tempDiv.style.fontSize = '16px';
+            tempDiv.style.fontFamily = 'Noto Sans Gujarati, Noto Sans';
+            tempDiv.style.background = 'transparent';
+            tempDiv.style.lineHeight = '1.3';
+            tempDiv.innerHTML = htmlContent;
+
+            document.body.appendChild(tempDiv);
+
+            const imgs = Array.from(tempDiv.querySelectorAll('img'));
+            await Promise.all(imgs.map(img => {
+                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                });
+            }));
+            await new Promise(r => setTimeout(r, 60));
+
+            const canvas = await html2canvas(tempDiv, { scale: 2, backgroundColor: null });
+            const imgHeight = (canvas.height * colWidth) / canvas.width;
+
+            if (yPos + imgHeight > contentBottom) {
+                moveToNextColumnOrPage();
+            }
+
+            const xPos = currentCol === 0 ? margin : margin + colWidth + margin;
+            doc.addImage(canvas.toDataURL('image/png'), 'PNG', xPos, yPos, colWidth, imgHeight);
+            yPos += imgHeight + 1.5; 
+
+            document.body.removeChild(tempDiv);
+        }
+
+        for (let idx = 0; idx < questionsArr.length; idx++) {
+            const q = questionsArr[idx];
+            const displayNum = q.customNum ? q.customNum : `${idx + 1}`;
+
+            const pyqPDF = q.pyq ? `<span style="font-size:12.5px; font-weight:700; color:#555; margin-left:auto; padding-left:6px; white-space:nowrap;">${q.pyq}</span>` : '';
+
+            let qTitleHTML = `<div style="display:flex; align-items:flex-start; font-size:17px; font-weight: 600; line-height:1.3; margin-bottom:2px; width:100%;">
+                <span style="min-width: 32px; display:inline-block; font-weight:bold; flex-shrink: 0;">${displayNum}</span>
+                <div style="flex-grow: 1;">${q.text ? q.text : ''}</div>
+                ${pyqPDF}
+            </div>`;
+            await renderAndAppendChunk(qTitleHTML);
+
+            if (q.mainImg) {
+                const imgWidthPct = q.mainImgScale || 60;
+                let imgHTML = `<div style="padding-left: 32px; text-align:center; margin:2px 0;">
+                    <img src="${q.mainImg}" style="width:${imgWidthPct}%; max-height:180px; object-fit:contain; display:inline-block; background:transparent;">
+                </div>`;
+                await renderAndAppendChunk(imgHTML);
+            }
+
+            if (q.type === 'match') {
+                const head1 = q.details.title1 || 'Column - I';
+                const head2 = q.details.title2 || 'Column - II';
+                let matchHTML = `<div style="padding-left: 32px; margin:2px 0;"><table class="pdf-match-table">
+                    <thead><tr><th>${head1}</th><th>${head2}</th></tr></thead><tbody>`;
+                const maxRows = Math.max(q.details.colA.length, q.details.colB.length);
+                for (let r = 0; r < maxRows; r++) {
+                    const colBImg = (q.details.colBImgs && q.details.colBImgs[r]) ? q.details.colBImgs[r] : null;
+                    matchHTML += `<tr>
+                        <td>${q.details.colA[r] || ''}</td>
+                        <td>
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                                <span>${q.details.colB[r] || ''}</span>
+                                ${colBImg ? `<div style="background:#ffffff; border:1px solid #ddd; padding:2px; border-radius:3px; display:inline-block;"><img src="${colBImg}" style="max-height:48px; max-width:85px; object-fit:contain; display:block;"></div>` : ''}
+                            </div>
+                        </td>
+                    </tr>`;
+                }
+                matchHTML += `</tbody></table></div>`;
+                await renderAndAppendChunk(matchHTML);
+
+                if (q.details.bottomText) {
+                    let bTextHTML = `<div style="padding-left: 32px; font-size:16px; margin: 2px 0;">${q.details.bottomText}</div>`;
+                    await renderAndAppendChunk(bTextHTML);
+                }
+            } else if (q.type === 'assertion') {
+                let assertHTML = `<div style="padding-left: 32px; font-size:16px; margin:2px 0; line-height:1.3;">
+                    <div style="margin-bottom:2px;"><b>વિધાન (A):</b> ${q.details.A}</div>
+                    <div><b>કારણ (R):</b> ${q.details.R}</div>
+                </div>`;
+                await renderAndAppendChunk(assertHTML);
+            } else if (q.type === 'two_statements') {
+                let twoStmtsHTML = `<div style="padding-left: 32px; font-size:16px; margin:2px 0; line-height:1.3;">
+                    <div style="margin-bottom:2px;"><b>વિધાન I:</b> ${q.details.stmt1}</div>
+                    <div><b>વિધાન II:</b> ${q.details.stmt2}</div>
+                </div>`;
+                await renderAndAppendChunk(twoStmtsHTML);
+            } else if (q.type === 'statement') {
+                if (q.details.stmts && q.details.stmts.length > 0) {
+                    for (let sIdx = 0; sIdx < q.details.stmts.length; sIdx++) {
+                        let stmtRowHTML = `<div style="padding-left: 32px; font-size:16px; margin-bottom:2px; line-height:1.3;"><b>(${toRoman(sIdx + 1)})</b> ${q.details.stmts[sIdx]}</div>`;
+                        await renderAndAppendChunk(stmtRowHTML);
+                    }
+                }
+                if (q.details.bottomText) {
+                    let bTextHTML = `<div style="padding-left: 32px; font-size:16px; margin-top:2px;">${q.details.bottomText}</div>`;
+                    await renderAndAppendChunk(bTextHTML);
+                }
+            }
+
+            if (q.type !== 'full_image') {
+                for (let o of ['1', '2', '3', '4']) {
+                    const opt = q.options[o] || q.options[String.fromCharCode(64 + parseInt(o))];
+                    if (opt && opt.text) {
+                        let optHTML = `<div style="padding-left: 32px; font-size:16px; margin-top:2px; line-height:1.25;">
+                            <div style="display:flex; align-items:center;">
+                                <span style="min-width: 28px; display:inline-block; font-weight:bold; flex-shrink: 0;">(${o})</span>
+                                <div>${opt.text}</div>
+                            </div>
+                        </div>`;
+                        await renderAndAppendChunk(optHTML);
+                    }
+                }
+            }
+
+            yPos += 2.0;
+        }
+
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            drawHeaderFooterWatermark(doc, i, totalPages);
+        }
+
+        return doc;
+    }
+
+    async function viewPDF() {
+        const doc = await generatePDFDoc();
+        if (!doc) return;
+
+        const pdfBlobUrl = doc.output('bloburl');
+
+        const modal = document.getElementById('previewModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalImg = document.getElementById('modalPreviewImg');
+        const modalPDF = document.getElementById('modalPreviewPDF');
+        const downloadBtn = document.getElementById('downloadModalBtn');
+
+        modalTitle.innerText = "📄 Question Paper PDF Preview";
+        modalPDF.src = pdfBlobUrl;
+        modalPDF.style.display = 'block';
+        modalImg.style.display = 'none';
+
+        downloadBtn.onclick = function() {
+            doc.save("Question_Paper_A4_TwoColumn.pdf");
+        };
+
+        modal.style.display = 'flex';
+    }
+
+    async function exportPDF_TwoColumn() {
+        const doc = await generatePDFDoc();
+        if (doc) {
+            doc.save("Question_Paper_A4_TwoColumn.pdf");
+        }
+    }
+
+    function closePreviewModal() {
+        document.getElementById('previewModal').style.display = 'none';
+    }
+
+    async function download169PNG(index) {
+        const canvas = await generate169Canvas(index);
+        downloadImageFromUrl(canvas.toDataURL('image/png'), index);
+    }
+
+    function downloadImageFromUrl(dataUrl, index) {
+        const q = questionsArr[index];
+        const displayNum = q.customNum ? q.customNum : `${index + 1})`;
+        const link = document.createElement('a');
+        link.download = `Question_${displayNum.replace(/[^a-zA-Z0-9]/g, '_')}_1920x1080.png`;
+        link.href = dataUrl;
+        link.click();
+    }
+</script>
+
+</body>
+</html>
