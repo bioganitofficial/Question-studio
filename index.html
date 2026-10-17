@@ -704,7 +704,7 @@
         </div>
 
         <div class="panel-scrollable-body">
-            <!-- MOBILE QUICK-INSERT TOOLBAR (Direct Sub/Sup, dN/dt Fractions & Scientific Symbols for iPhone) -->
+            <!-- MOBILE QUICK-INSERT TOOLBAR -->
             <div class="mobile-quick-toolbar">
                 <span style="font-size:11px; font-weight:700; color:#64748b; margin-right:2px;">Quick:</span>
                 <button type="button" class="tb-chip" style="background:#fef3c7; color:#92400e; border-color:#fde68a;" onclick="quickInsertSymbol('\\frac{dN}{dt}')">dN/dt</button>
@@ -1152,12 +1152,10 @@
     function renderMathInHtml(text) {
         if (!text) return '';
         
-        // 1. Process explicit \frac{numerator}{denominator}
         let formatted = text.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, function(match, num, den) {
             return `<span class="frac-block"><span class="frac-num">${num}</span><span class="frac-den">${den}</span></span>`;
         });
 
-        // 2. Process $...$ LaTeX if KaTeX is loaded
         if (window.katex) {
             formatted = formatted.replace(/\$([^$]+)\$/g, function(match, tex) {
                 try {
@@ -2119,7 +2117,65 @@
         aiBtn.disabled = true;
 
         const systemInstruction = `You are the chief scientific translator for GSEB / NCERT Biology (Standard 11 & 12) Gujarati Medium.
-Strict Mandate: Translate English Biology questions strictly using the authentic Gujarat State Board NCERT textbook glossary. Never use Hindi vocabulary.`;
+Strict Mandate: Translate English Biology questions strictly using authentic Gujarat State Board NCERT textbook glossary. Never use Hindi vocabulary (e.g., Never use પરિભ્રૂણપોષ).
+
+MANDATORY NCERT GUJARATI TERMINOLOGY DICTIONARY:
+[Reproduction in Plants & Angiosperms]
+- Aestivation -> કલિકાંતરવિન્યાસ
+- Decapitation -> અગ્રીય કલિકા દૂર કરવી (શિર્ષચ્છેદન)
+- Degenerate codon / Degenerate code -> અપભ્રષ્ટ સંકેત
+- Perisperm -> બીજદેહશેષ
+- Nucellus -> પ્રદેહ
+- Endosperm -> ભ્રૂણપોષ
+- Tapetum -> પોષકસ્તર
+- Microsporangium -> લઘુબીજાણુધાની
+- Megasporangium / Ovule -> મહાબીજાણુધાની / અંડક
+- Embryo sac -> ભ્રૂણપૂટ
+- Synergids -> સહાયક કોષો
+- Antipodals -> પ્રતિધ્રુવી કોષો
+- Filiform apparatus -> તંતુમય પ્રસાધન
+- Coleoptile -> ભ્રૂણચોલ
+- Coleorhiza -> ભ્રૂણમૂળચોલ
+- Scutellum -> વરુથિકા
+- Aleurone layer -> સમિતાયા સ્તર
+- Apomixis -> અસંયોગીજનન
+- Parthenocarpy -> અસંયોગીફલન
+- Parthenogenesis -> અસંયોગીજનન
+- Cleistogamous -> સંવૃત (કલિકાગત) પુષ્પો
+- Chasmogamous -> હવાઈ (ઉઘાડા) પુષ્પો
+- Geitonogamy -> ગેઇટોનોગેમી
+- Xenogamy -> પર્વશ / પરપરાગનયન
+
+[Genetics & Molecular Biology]
+- Linkage -> સહલગ્નતા
+- Recombination -> પુનઃસંયોજન
+- Incomplete Dominance -> અપૂર્ણ પ્રભાવિતા
+- Co-dominance -> સહપ્રભાવિતા
+- Pleiotropy -> પ્લિયોટ્રોપી / બહુઅસરીયતા
+- Polygenic inheritance -> બહુજનીનિક વારસો
+- Transcription -> પ્રત્યાંકન
+- Translation -> ભાષાંતરણ
+- Replication -> સ્વયંજનન
+- Codon -> સંકેત
+- Cistron -> સિસ્ટ્રોન
+- Splicing -> સ્પ્લાઈસિંગ
+- Capping -> કેપિંગ
+- Tailing -> ટેઇલિંગ
+
+[Biotechnology & Cell Biology]
+- Restriction enzyme -> રિસ્ટ્રિક્શન ઉત્સેચક
+- Recognition sequence -> ઓળખ ક્રમ
+- Selectable marker -> પસંદગીમાન સૂચક
+- Downstream processing -> અનુપ્રવાહિત પ્રક્રિયા
+- Centromere -> સેન્ટ્રોમિયર
+- Kinetochore -> કાઇનેટોકોર
+- Homologous chromosomes -> સમજાત રંગસૂત્રો
+- Crossing over -> વ્યતિકરણ
+- Chiasmata -> સ્વસ્તિક ચોકડીઓ
+
+CRITICAL RULES:
+1. Always keep scientific symbols, fractions, or English abbreviations intact or in brackets if required (e.g., dN/dt, ATP, RuBisCO, DNA, RNA).
+2. Return ONLY a valid JSON object strictly mirroring the incoming keys. No explanations, no markdown formatting.`;
 
         const requestBody = JSON.stringify({
             contents: [{
@@ -2134,7 +2190,14 @@ Strict Mandate: Translate English Biology questions strictly using the authentic
             }
         });
 
-        const candidateModels = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+        // CURRENT ACTIVE MODELS LIST WITH MULTI-VERSION FALLBACK
+        const candidateModels = [
+            'gemini-2.5-flash',
+            'gemini-2.0-flash',
+            'gemini-2.0-flash-001',
+            'gemini-flash-latest'
+        ];
+
         let success = false;
         let lastError = "";
 
@@ -2150,7 +2213,7 @@ Strict Mandate: Translate English Biology questions strictly using the authentic
                     });
 
                     if (response.status === 429 || response.status === 503) {
-                        await new Promise(r => setTimeout(r, 700));
+                        await new Promise(r => setTimeout(r, 600));
                         continue;
                     }
 
@@ -2181,30 +2244,35 @@ Strict Mandate: Translate English Biology questions strictly using the authentic
                     if (translated.stmt2 && document.getElementById('stmt2Input')) {
                         document.getElementById('stmt2Input').value = translated.stmt2;
                     }
+
                     if (translated.statements && Array.isArray(translated.statements)) {
                         const stmtInputs = document.querySelectorAll('.stmt');
                         translated.statements.forEach((txt, idx) => {
                             if (stmtInputs[idx]) stmtInputs[idx].value = txt;
                         });
                     }
+
                     if (translated.col1Header && document.getElementById('col1Header')) {
                         document.getElementById('col1Header').value = translated.col1Header;
                     }
                     if (translated.col2Header && document.getElementById('col2Header')) {
                         document.getElementById('col2Header').value = translated.col2Header;
                     }
+
                     if (translated.colA && Array.isArray(translated.colA)) {
                         const colAInputs = document.querySelectorAll('.colA');
                         translated.colA.forEach((txt, idx) => {
                             if (colAInputs[idx]) colAInputs[idx].value = txt;
                         });
                     }
+
                     if (translated.colB && Array.isArray(translated.colB)) {
                         const colBInputs = document.querySelectorAll('.colB');
                         translated.colB.forEach((txt, idx) => {
                             if (colBInputs[idx]) colBInputs[idx].value = txt;
                         });
                     }
+
                     if (translated.options) {
                         ['1', '2', '3', '4'].forEach(optNum => {
                             const optKey = `opt${optNum}`;
@@ -2214,11 +2282,12 @@ Strict Mandate: Translate English Biology questions strictly using the authentic
                             }
                         });
                     }
+
                     success = true;
                     break;
                 } catch (err) {
                     lastError = err.message;
-                    await new Promise(r => setTimeout(r, 600));
+                    await new Promise(r => setTimeout(r, 400));
                 }
             }
         }
