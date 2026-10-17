@@ -23,6 +23,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+    <!-- KaTeX for Fractions & Mathematical Equations -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
     <style>
         :root {
             --primary-color: #1e293b;
@@ -220,6 +224,7 @@
             align-items: center;
             gap: 4px;
             white-space: nowrap;
+            touch-action: manipulation;
         }
 
         .btn:hover { opacity: 0.9; }
@@ -298,6 +303,53 @@
             background: #fafafa;
             border-radius: 4px;
             text-align: center;
+        }
+
+        /* IPHONE & MOBILE QUICK INSERT TOOLBAR */
+        .mobile-quick-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 4px 6px;
+            margin-bottom: 6px;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .mobile-quick-toolbar::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        .mobile-quick-toolbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .tb-chip {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 3px 7px;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #1e293b;
+            cursor: pointer;
+            touch-action: manipulation;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tb-chip:active {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #1d4ed8;
         }
 
         /* HD EXPORT CONTAINER & REFERENCE LAYOUT */
@@ -489,6 +541,51 @@
         .modal-img { max-width: 100%; max-height: 72vh; object-fit: contain; }
         .pdf-frame { width: 100%; height: 72vh; border: 1px solid #ccc; border-radius: 4px; }
 
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .palette-btn {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 8px 4px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            color: #1e293b;
+            touch-action: manipulation;
+        }
+
+        .palette-btn:active {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #1d4ed8;
+        }
+
+        /* PURE-CSS FRACTION RENDERING COMPATIBLE WITH HTML2CANVAS */
+        .frac-block {
+            display: inline-flex;
+            flex-direction: column;
+            vertical-align: middle;
+            text-align: center;
+            padding: 0 3px;
+            line-height: 1.1;
+        }
+        .frac-num {
+            border-bottom: 1.5px solid currentColor;
+            padding-bottom: 1px;
+            font-size: 0.88em;
+        }
+        .frac-den {
+            padding-top: 1px;
+            font-size: 0.88em;
+        }
+
         @media (max-width: 900px) {
             body {
                 height: auto;
@@ -518,7 +615,7 @@
                 overflow: visible;
                 padding: 8px;
                 gap: 12px;
-                padding-bottom: max(16px, env(safe-area-inset-bottom));
+                padding-bottom: max(24px, env(safe-area-inset-bottom));
             }
 
             .column-card {
@@ -566,6 +663,9 @@
 <div class="top-navbar">
     <div class="brand-area">
         <h2>📝 Question Studio <span class="badge">IndexedDB Active</span></h2>
+        <button class="btn btn-teal btn-sm" onclick="openModal('formulaPaletteModal')" title="Open Equation & Symbol Palette (Press F7)">
+            <span class="f-key-badge">F7</span> 🧪 Formula / Math
+        </button>
         <button class="btn btn-slate btn-sm" onclick="openModal('pdfSettingsModal')" title="Open PDF & Watermark Settings (Press F2)">
             <span class="f-key-badge">F2</span> 📄 PDF & Header Settings
         </button>
@@ -604,6 +704,26 @@
         </div>
 
         <div class="panel-scrollable-body">
+            <!-- MOBILE QUICK-INSERT TOOLBAR (Direct Sub/Sup, dN/dt Fractions & Scientific Symbols for iPhone) -->
+            <div class="mobile-quick-toolbar">
+                <span style="font-size:11px; font-weight:700; color:#64748b; margin-right:2px;">Quick:</span>
+                <button type="button" class="tb-chip" style="background:#fef3c7; color:#92400e; border-color:#fde68a;" onclick="quickInsertSymbol('\\frac{dN}{dt}')">dN/dt</button>
+                <button type="button" class="tb-chip" style="background:#fef3c7; color:#92400e; border-color:#fde68a;" onclick="quickInsertFractionPrompt()">a/b (Frac)</button>
+                <button type="button" class="tb-chip" onclick="triggerMobileFormatTag('sub')">X₂ (Sub)</button>
+                <button type="button" class="tb-chip" onclick="triggerMobileFormatTag('sup')">X² (Sup)</button>
+                <button type="button" class="tb-chip" onclick="quickInsertSymbol('→')">→</button>
+                <button type="button" class="tb-chip" onclick="quickInsertSymbol('⇌')">⇌</button>
+                <button type="button" class="tb-chip" onclick="quickInsertSymbol('⁺')">⁺</button>
+                <button type="button" class="tb-chip" onclick="quickInsertSymbol('⁻')">⁻</button>
+                <button type="button" class="tb-chip" onclick="quickInsertSymbol('Δ')">Δ</button>
+                <button type="button" class="tb-chip" onclick="quickInsertSymbol('°')">°</button>
+                <button type="button" class="tb-chip" onclick="quickInsertSymbol('μ')">μ</button>
+                <button type="button" class="tb-chip" onclick="quickInsertSymbol('×')">×</button>
+                <button type="button" class="tb-chip" onclick="quickInsertSymbol('÷')">÷</button>
+                <button type="button" class="tb-chip" onclick="quickInsertSymbol('±')">±</button>
+                <button type="button" class="tb-chip" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;" onclick="openModal('formulaPaletteModal')">➕ More...</button>
+            </div>
+
             <div class="grid-3-custom">
                 <div class="form-group">
                     <label>પ્રશ્ન નંબર / લેબલ</label>
@@ -629,7 +749,7 @@
 
             <div class="form-group">
                 <label>પ્રશ્નનું લખાણ (Question Text - English or Gujarati)</label>
-                <textarea id="qText" rows="2" placeholder="પ્રશ્ન અથવા નોંધ ટાઈપ કરો... (English ma type kari AI Translate dabavo)"></textarea>
+                <textarea id="qText" rows="2" placeholder="પ્રશ્ન અથવા નોંધ ટાઈપ કરો... (Fractions mate \frac{dN}{dt} vapro)"></textarea>
             </div>
 
             <div class="form-group" id="mainImgContainer">
@@ -668,6 +788,74 @@
     </div>
 </div>
 
+<!-- POPUP MODAL: CHEMICAL & MATHEMATICAL PALETTE (F7) -->
+<div id="formulaPaletteModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>🧪 Mathematical Equations & Formulas <span class="badge">Press F7 to toggle</span></h3>
+            <button class="btn btn-red btn-sm" onclick="closeModal('formulaPaletteModal')">✖</button>
+        </div>
+        <div class="modal-body">
+            <h4 style="margin:4px 0 6px 0; font-size:12.5px; color:#2563eb;">Biology Population & Genetics Equations:</h4>
+            <div class="palette-grid">
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('\\frac{dN}{dt} = rN')">dN/dt = rN</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('\\frac{dN}{dt} = rN(\\frac{K-N}{K})')">Logistic</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('p^2 + 2pq + q^2 = 1')">p²+2pq+q²=1</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('p + q = 1')">p + q = 1</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('\\frac{1}{2}')">½</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('\\frac{3}{4}')">¾</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('\\frac{1}{4}')">¼</button>
+                <button type="button" class="palette-btn" onclick="quickInsertFractionPrompt()">Custom a/b</button>
+            </div>
+
+            <h4 style="margin:12px 0 4px 0; font-size:12.5px; color:#2563eb;">Chemical Formulas & Bio Compounds:</h4>
+            <div class="palette-grid">
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('H₂O')">H₂O</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('CO₂')">CO₂</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('O₂')">O₂</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('ATP')">ATP</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('NADPH')">NADPH</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('NADP⁺')">NADP⁺</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('C₆H₁₂O₆')">C₆H₁₂O₆</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('Ca²⁺')">Ca²⁺</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('Mg²⁺')">Mg²⁺</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('H⁺')">H⁺</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('OH⁻')">OH⁻</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('PO₄³⁻')">PO₄³⁻</button>
+            </div>
+
+            <h4 style="margin:12px 0 4px 0; font-size:12.5px; color:#2563eb;">Arrows, States & Reaction Symbols:</h4>
+            <div class="palette-grid">
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol(' → ')">→</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol(' ⇌ ')">⇌</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol(' ↑ ')">↑ (Gas)</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol(' ↓ ')">↓ (Ppt)</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('Δ')">Δ (Heat)</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('°C')">°C</button>
+            </div>
+
+            <h4 style="margin:12px 0 4px 0; font-size:12.5px; color:#2563eb;">Mathematical & Genetics Symbols:</h4>
+            <div class="palette-grid">
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('±')">±</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('≠')">≠</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('≈')">≈</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('≤')">≤</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('≥')">≥</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('α')">α</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('β')">β</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('γ')">γ</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('π')">π</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('√')">√</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('‰')">‰</button>
+                <button type="button" class="palette-btn" onclick="quickInsertSymbol('μm')">μm</button>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-slate" onclick="closeModal('formulaPaletteModal')">Close</button>
+        </div>
+    </div>
+</div>
+
 <!-- POPUP MODAL: GEMINI API KEY SETTINGS (F6) -->
 <div id="apiKeyModal" class="modal-overlay">
     <div class="modal-card">
@@ -677,14 +865,11 @@
         </div>
         <div class="modal-body">
             <p style="font-size:12px; color:#475569; margin-top:0;">
-                English mathi NCERT Gujarati translation mate tamari free <strong>Google Gemini API Key</strong> ahiya paste karo. Aa key tamara browser ma j safe rahese.
+                English mathi NCERT Gujarati translation mate tamari free <strong>Google Gemini API Key</strong> ahiya paste karo.
             </p>
             <div class="form-group">
                 <label>Gemini API Key:</label>
                 <input type="text" id="geminiApiKeyInput" placeholder="AIzaSy..." oninput="saveSettingsLocally()">
-            </div>
-            <div style="font-size:11.5px; color:#64748b; margin-top:8px; line-height:1.5;">
-                📌 <em>Free API Key melvva: <a href="https://aistudio.google.com/" target="_blank" style="color:#2563eb; font-weight:bold;">Google AI Studio</a> par jaine 1 minute ma free key generate kari sako cho.</em>
             </div>
         </div>
         <div class="modal-footer">
@@ -811,7 +996,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label>16:9 બેકગ્રાઉન્ડ ઈમેજ અપલોડ કરો (Optional - જો ઈમેજ રાખવી હોય તો)</label>
+                <label>16:9 બેકગ્રાઉન્ડ ઈમેજ અપલોડ કરો (Optional)</label>
                 <input type="file" id="bgUpload" accept="image/*" onchange="handleBgUpload(event)">
                 <span id="bgStatusText" style="font-size:11px; color:#64748b; margin-top:2px; display:block;">હાલમાં: Plain Solid Color Active</span>
             </div>
@@ -900,6 +1085,7 @@
     let currentColBImgs = []; 
 
     let editingIndex = -1;
+    let lastActiveField = null;
 
     const defaultAROptions = {
         '1': 'A અને R બંને સાચાં છે અને R એ A ની સાચી સમજૂતી છે',
@@ -914,6 +1100,75 @@
         '3': 'વિધાન I સાચું છે, પરંતુ વિધાન II ખોટું છે',
         '4': 'વિધાન I ખોટું છે, પરંતુ વિધાન II સાચું છે'
     };
+
+    // TRACK FOCUSED INPUT FOR PHONE QUICK-INSERT
+    document.addEventListener('focusin', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            if (e.target.type !== 'file' && e.target.type !== 'color' && e.target.type !== 'range') {
+                lastActiveField = e.target;
+            }
+        }
+    });
+
+    function getTargetInputField() {
+        if (lastActiveField && document.body.contains(lastActiveField)) {
+            return lastActiveField;
+        }
+        const defaultField = document.getElementById('qText');
+        return defaultField || document.querySelector('input[type="text"], textarea');
+    }
+
+    function triggerMobileFormatTag(tag) {
+        const field = getTargetInputField();
+        if (!field) return;
+        applyTagToSelection(field, tag);
+    }
+
+    function quickInsertSymbol(sym) {
+        const field = getTargetInputField();
+        if (!field) return;
+
+        const start = field.selectionStart || 0;
+        const end = field.selectionEnd || 0;
+        const val = field.value || '';
+
+        field.value = val.substring(0, start) + sym + val.substring(end);
+        const newPos = start + sym.length;
+        field.focus();
+        try {
+            field.setSelectionRange(newPos, newPos);
+        } catch(e) {}
+    }
+
+    function quickInsertFractionPrompt() {
+        const num = prompt("અંશ (Numerator) દાખલ કરો:", "dN");
+        if (num === null) return;
+        const den = prompt("છેદ (Denominator) દાખલ કરો:", "dt");
+        if (den === null) return;
+        quickInsertSymbol(`\\frac{${num}}{${den}}`);
+    }
+
+    // ROBUST MATHEMATICAL FRACTION CONVERTER (KaTeX + Canvas HTML Fallback)
+    function renderMathInHtml(text) {
+        if (!text) return '';
+        
+        // 1. Process explicit \frac{numerator}{denominator}
+        let formatted = text.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, function(match, num, den) {
+            return `<span class="frac-block"><span class="frac-num">${num}</span><span class="frac-den">${den}</span></span>`;
+        });
+
+        // 2. Process $...$ LaTeX if KaTeX is loaded
+        if (window.katex) {
+            formatted = formatted.replace(/\$([^$]+)\$/g, function(match, tex) {
+                try {
+                    return katex.renderToString(tex, { throwOnError: false, displayMode: false });
+                } catch(e) {
+                    return match;
+                }
+            });
+        }
+        return formatted;
+    }
 
     let db;
     function initDatabase() {
@@ -1027,11 +1282,17 @@
                 const m = document.getElementById('apiKeyModal');
                 m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
             }
+            if (e.key === 'F7') {
+                e.preventDefault();
+                const m = document.getElementById('formulaPaletteModal');
+                m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+            }
             if (e.key === 'Escape') {
                 closeModal('pdfSettingsModal');
                 closeModal('badgeSettingsModal');
                 closeModal('pngSettingsModal');
                 closeModal('apiKeyModal');
+                closeModal('formulaPaletteModal');
                 closePreviewModal();
             }
 
@@ -1208,7 +1469,7 @@
     }
 
     async function clearAllData() {
-        if (confirm("શું તમે ખરેખર બધા જ પ્રશ્નો ડિલીટ કરવા માંગો છો? આ સ્ટેપ પાછો નહીં ખેંચી શકાય!")) {
+        if (confirm("શું તમે ખરેખર બધા જ પ્રશ્નો ડિલીટ કરવા માંગો છો?")) {
             questionsArr = [];
             await saveAllQuestionsToDB();
             localStorage.removeItem('qb_questions');
@@ -1239,8 +1500,6 @@
                     await saveAllQuestionsToDB();
                     renderQuestionsList();
                     alert("બેકઅપ ફાઈલ સફળતાપૂર્વક લોડ થઈ ગઈ છે!");
-                } else {
-                    alert("ફાઈલનો ફોરમેટ સાચો નથી!");
                 }
             } catch (err) {
                 alert("ફાઈલ રીડ કરવામાં ભૂલ થઈ!");
@@ -1860,63 +2119,7 @@
         aiBtn.disabled = true;
 
         const systemInstruction = `You are the chief scientific translator for GSEB / NCERT Biology (Standard 11 & 12) Gujarati Medium.
-Strict Mandate: Translate English Biology questions strictly using the authentic Gujarat State Board NCERT textbook glossary. Never use Hindi vocabulary (e.g., Never use પરિભ્રૂણપોષ).
-
-MANDATORY NCERT GUJARATI TERMINOLOGY DICTIONARY:
-[Reproduction in Plants & Angiosperms]
-- Perisperm -> બીજદેહશેષ
-- Nucellus -> પ્રદેહ
-- Endosperm -> ભ્રૂણપોષ
-- Tapetum -> પોષકસ્તર
-- Microsporangium -> લઘુબીજાણુધાની
-- Megasporangium / Ovule -> મહાબીજાણુધાની / અંડક
-- Embryo sac -> ભ્રૂણપૂટ
-- Synergids -> સહાયક કોષો
-- Antipodals -> પ્રતિધ્રુવી કોષો
-- Filiform apparatus -> તંતુમય પ્રસાધન
-- Coleoptile -> ભ્રૂણચોલ
-- Coleorhiza -> ભ્રૂણમૂળચોલ
-- Scutellum -> વરુથિકા
-- Aleurone layer -> સમિતાયા સ્તર
-- Apomixis -> અસંગોગિજનન
-- Parthenocarpy -> અસંગોગિફલન
-- Parthenogenesis -> અસંયોગીજનન
-- Cleistogamous -> સંવૃત (કલિકાગત) પુષ્પો
-- Chasmogamous -> હવાઈ (ઉઘાડા) પુષ્પો
-- Geitonogamy -> ગેઇટોનોગેમી
-- Xenogamy -> પર્વશ / પરપરાગનયન
-
-[Genetics & Molecular Biology]
-- Linkage -> સહલગ્નતા
-- Recombination -> પુનઃસંયોજન
-- Incomplete Dominance -> અપૂર્ણ પ્રભાવિતા
-- Co-dominance -> સહપ્રભાવિતા
-- Pleiotropy -> પ્લિયોટ્રોપી / બહુઅસરીયતા
-- Polygenic inheritance -> બહુજનીનિક વારસો
-- Transcription -> પ્રત્યાંકન
-- Translation -> ભાષાંતરણ
-- Replication -> સ્વયંજનન
-- Codon -> સંકેત
-- Degenerate codon -> અપભ્રષ્ટ સંકેત
-- Cistron -> સિસ્ટ્રોન
-- Splicing -> સ્પ્લાઈસિંગ
-- Capping -> કેપિંગ
-- Tailing -> ટેઇલિંગ
-
-[Biotechnology & Cell Biology]
-- Restriction enzyme -> રિસ્ટ્રિક્શન ઉત્સેચક
-- Recognition sequence -> ઓળખ ક્રમ
-- Selectable marker -> પસંદગીમાન સૂચક
-- Downstream processing -> અનુપ્રવાહિત પ્રક્રિયા
-- Centromere -> સેન્ટ્રોમિયર
-- Kinetochore -> કાઇનેટોકોર
-- Homologous chromosomes -> સમજાત રંગસૂત્રો
-- Crossing over -> વ્યતિકરણ
-- Chiasmata -> સ્વસ્તિક ચોકડીઓ
-
-CRITICAL RULES:
-1. Always keep scientific symbols or English abbreviations intact or in brackets if required (e.g., ATP, RuBisCO, DNA, RNA).
-2. Return ONLY a valid JSON object strictly mirroring the incoming keys. No explanations, no markdown formatting.`;
+Strict Mandate: Translate English Biology questions strictly using the authentic Gujarat State Board NCERT textbook glossary. Never use Hindi vocabulary.`;
 
         const requestBody = JSON.stringify({
             contents: [{
@@ -1931,11 +2134,7 @@ CRITICAL RULES:
             }
         });
 
-        const candidateModels = [
-            'gemini-3.5-flash-lite',
-            'gemini-3.8-flash'
-        ];
-
+        const candidateModels = ['gemini-2.5-flash', 'gemini-1.5-flash'];
         let success = false;
         let lastError = "";
 
@@ -1982,35 +2181,30 @@ CRITICAL RULES:
                     if (translated.stmt2 && document.getElementById('stmt2Input')) {
                         document.getElementById('stmt2Input').value = translated.stmt2;
                     }
-
                     if (translated.statements && Array.isArray(translated.statements)) {
                         const stmtInputs = document.querySelectorAll('.stmt');
                         translated.statements.forEach((txt, idx) => {
                             if (stmtInputs[idx]) stmtInputs[idx].value = txt;
                         });
                     }
-
                     if (translated.col1Header && document.getElementById('col1Header')) {
                         document.getElementById('col1Header').value = translated.col1Header;
                     }
                     if (translated.col2Header && document.getElementById('col2Header')) {
                         document.getElementById('col2Header').value = translated.col2Header;
                     }
-
                     if (translated.colA && Array.isArray(translated.colA)) {
                         const colAInputs = document.querySelectorAll('.colA');
                         translated.colA.forEach((txt, idx) => {
                             if (colAInputs[idx]) colAInputs[idx].value = txt;
                         });
                     }
-
                     if (translated.colB && Array.isArray(translated.colB)) {
                         const colBInputs = document.querySelectorAll('.colB');
                         translated.colB.forEach((txt, idx) => {
                             if (colBInputs[idx]) colBInputs[idx].value = txt;
                         });
                     }
-
                     if (translated.options) {
                         ['1', '2', '3', '4'].forEach(optNum => {
                             const optKey = `opt${optNum}`;
@@ -2020,7 +2214,6 @@ CRITICAL RULES:
                             }
                         });
                     }
-
                     success = true;
                     break;
                 } catch (err) {
@@ -2074,7 +2267,7 @@ CRITICAL RULES:
         let pyqHTML = q.pyq ? `<span style="margin-left: auto; font-size:${parseInt(qSize)-10}px; background: rgba(25,118,210,0.2); border: 1.5px solid rgba(33,150,243,0.6); color: #ffffff; padding: 4px 16px; border-radius: 8px; font-weight: 700; white-space: nowrap; align-self: flex-start;">${q.pyq}</span>` : '';
 
         let contentHTML = `<div style="display:flex; align-items:flex-start; font-weight:700; color:${qColor}; margin-bottom:25px; font-size:${qSize}px; line-height:1.45; width: 100%;">
-            <div style="flex-grow: 1; color:${qColor}; padding-right: 15px; font-weight:700;">${q.text ? q.text : ''}</div>
+            <div style="flex-grow: 1; color:${qColor}; padding-right: 15px; font-weight:700;">${renderMathInHtml(q.text ? q.text : '')}</div>
             ${pyqHTML}
         </div>`;
 
@@ -2085,7 +2278,7 @@ CRITICAL RULES:
             if (!opt || !opt.text) return '';
             return `<div style="display:flex; align-items:center; gap:24px;">
                 <span style="width: 68px; height: 68px; border: 4px solid ${badgeColor}; color: ${badgeColor}; background-color: ${badgeBgColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${optKey}</span>
-                <span style="font-size:${optSize}px; color:${optColor}; line-height:1.35; font-weight:700;">${opt.text}</span>
+                <span style="font-size:${optSize}px; color:${optColor}; line-height:1.35; font-weight:700;">${renderMathInHtml(opt.text)}</span>
             </div>`;
         }
 
@@ -2122,10 +2315,10 @@ CRITICAL RULES:
                 for (let r = 0; r < maxRows; r++) {
                     const colBImg = (q.details.colBImgs && q.details.colBImgs[r]) ? q.details.colBImgs[r] : null;
                     subContentHTML += `<tr>
-                        <td style="color:${qColor}; font-weight:700;">${q.details.colA[r] || ''}</td>
+                        <td style="color:${qColor}; font-weight:700;">${renderMathInHtml(q.details.colA[r] || '')}</td>
                         <td style="color:${qColor}; font-weight:700;">
                             <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%;">
-                                <span style="flex:1; font-weight:700;">${q.details.colB[r] || ''}</span>
+                                <span style="flex:1; font-weight:700;">${renderMathInHtml(q.details.colB[r] || '')}</span>
                                 ${colBImg ? `<div class="colb-img-container" style="flex-shrink:0;"><img src="${colBImg}" style="max-height:85px; max-width:240px; object-fit:contain; display:block;"></div>` : ''}
                             </div>
                         </td>
@@ -2133,7 +2326,7 @@ CRITICAL RULES:
                 }
                 subContentHTML += `</tbody></table>`;
                 if (q.details.bottomText) {
-                    subContentHTML += `<div style="font-size:${qSize}px; font-weight:700; margin: 15px 0 5px 0; color:${qColor};">${q.details.bottomText}</div>`;
+                    subContentHTML += `<div style="font-size:${qSize}px; font-weight:700; margin: 15px 0 5px 0; color:${qColor};">${renderMathInHtml(q.details.bottomText)}</div>`;
                 }
 
                 subContentHTML += `<div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 50px; row-gap: 22px; font-size:${optSize}px; font-weight:700; margin-top: 40px; color:${optColor}; width:100%;">
@@ -2147,11 +2340,11 @@ CRITICAL RULES:
                 subContentHTML += `<div style="font-size:${qSize}px; margin-bottom:20px; font-weight:700; line-height:1.5; color:${qColor};">
                     <div style="margin-bottom:12px; display:flex; gap:10px;">
                         <b style="color:${qColor}; white-space:nowrap; font-weight:800;">વિધાન (A):</b>
-                        <span style="font-weight:700;">${q.details.A}</span>
+                        <span style="font-weight:700;">${renderMathInHtml(q.details.A)}</span>
                     </div>
                     <div style="display:flex; gap:10px;">
                         <b style="color:${qColor}; white-space:nowrap; font-weight:800;">કારણ (R):</b>
-                        <span style="font-weight:700;">${q.details.R}</span>
+                        <span style="font-weight:700;">${renderMathInHtml(q.details.R)}</span>
                     </div>
                 </div>`;
             } 
@@ -2159,20 +2352,20 @@ CRITICAL RULES:
                 subContentHTML += `<div style="font-size:${qSize}px; margin-bottom:20px; font-weight:700; line-height:1.5; color:${qColor};">
                     <div style="margin-bottom:12px; display:flex; gap:10px;">
                         <b style="color:${qColor}; white-space:nowrap; font-weight:800;">વિધાન I:</b>
-                        <span style="font-weight:700;">${q.details.stmt1}</span>
+                        <span style="font-weight:700;">${renderMathInHtml(q.details.stmt1)}</span>
                     </div>
                     <div style="display:flex; gap:10px;">
                         <b style="color:${qColor}; white-space:nowrap; font-weight:800;">વિધાન II:</b>
-                        <span style="font-weight:700;">${q.details.stmt2}</span>
+                        <span style="font-weight:700;">${renderMathInHtml(q.details.stmt2)}</span>
                     </div>
                 </div>`;
             }
             else if (q.type === 'statement') {
                 subContentHTML += `<div style="font-size:${qSize}px; margin-bottom:20px; font-weight:700; line-height:1.5; color:${qColor};">
-                    ${q.details.stmts.map((s, idx) => `<div style="margin-bottom:8px;"><b style="color:${qColor}; font-weight:800;">(${toRoman(idx + 1)})</b> <span style="font-weight:700;">${s}</span></div>`).join('')}
+                    ${q.details.stmts.map((s, idx) => `<div style="margin-bottom:8px;"><b style="color:${qColor}; font-weight:800;">(${toRoman(idx + 1)})</b> <span style="font-weight:700;">${renderMathInHtml(s)}</span></div>`).join('')}
                 </div>`;
                 if (q.details.bottomText) {
-                    subContentHTML += `<div style="font-size:${qSize}px; font-weight:700; margin: 15px 0 5px 0; color:${qColor};">${q.details.bottomText}</div>`;
+                    subContentHTML += `<div style="font-size:${qSize}px; font-weight:700; margin: 15px 0 5px 0; color:${qColor};">${renderMathInHtml(q.details.bottomText)}</div>`;
                 }
             }
 
@@ -2268,9 +2461,9 @@ CRITICAL RULES:
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
         
-        const line1 = document.getElementById('pdfHeaderLine1').value || "Maharashtra State Board of Secondary and Higher Secondary Education, Pune";
-        const line2 = document.getElementById('pdfHeaderLine2').value || "Sub. : Biology (56)";
-        const line3 = document.getElementById('pdfHeaderLine3').value || "Std. XII";
+        const line1 = document.getElementById('pdfHeaderLine1').value || "Gujarat Secondary and Higher Secondary Education Board";
+        const line2 = document.getElementById('pdfHeaderLine2').value || "Sub. : Biology (056)";
+        const line3 = document.getElementById('pdfHeaderLine3').value || "NEET / Board Exam Preparation";
         
         const footerLeft = document.getElementById('pdfFooterLeft').value || "";
         const footerCenter = document.getElementById('pdfFooterCenter').value || "";
@@ -2429,7 +2622,7 @@ CRITICAL RULES:
 
             let qTitleHTML = `<div style="display:flex; align-items:flex-start; font-size:17px; font-weight: 600; line-height:1.3; margin-bottom:2px; width:100%;">
                 <span style="min-width: 32px; display:inline-block; font-weight:bold; flex-shrink: 0;">${displayNum}</span>
-                <div style="flex-grow: 1;">${q.text ? q.text : ''}</div>
+                <div style="flex-grow: 1;">${renderMathInHtml(q.text ? q.text : '')}</div>
                 ${pyqPDF}
             </div>`;
             await renderAndAppendChunk(qTitleHTML);
@@ -2451,10 +2644,10 @@ CRITICAL RULES:
                 for (let r = 0; r < maxRows; r++) {
                     const colBImg = (q.details.colBImgs && q.details.colBImgs[r]) ? q.details.colBImgs[r] : null;
                     matchHTML += `<tr>
-                        <td>${q.details.colA[r] || ''}</td>
+                        <td>${renderMathInHtml(q.details.colA[r] || '')}</td>
                         <td>
                             <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
-                                <span>${q.details.colB[r] || ''}</span>
+                                <span>${renderMathInHtml(q.details.colB[r] || '')}</span>
                                 ${colBImg ? `<div style="background:#ffffff; border:1px solid #ddd; padding:2px; border-radius:3px; display:inline-block;"><img src="${colBImg}" style="max-height:48px; max-width:85px; object-fit:contain; display:block;"></div>` : ''}
                             </div>
                         </td>
@@ -2464,30 +2657,30 @@ CRITICAL RULES:
                 await renderAndAppendChunk(matchHTML);
 
                 if (q.details.bottomText) {
-                    let bTextHTML = `<div style="padding-left: 32px; font-size:16px; margin: 2px 0;">${q.details.bottomText}</div>`;
+                    let bTextHTML = `<div style="padding-left: 32px; font-size:16px; margin: 2px 0;">${renderMathInHtml(q.details.bottomText)}</div>`;
                     await renderAndAppendChunk(bTextHTML);
                 }
             } else if (q.type === 'assertion') {
                 let assertHTML = `<div style="padding-left: 32px; font-size:16px; margin:2px 0; line-height:1.3;">
-                    <div style="margin-bottom:2px;"><b>વિધાન (A):</b> ${q.details.A}</div>
-                    <div><b>કારણ (R):</b> ${q.details.R}</div>
+                    <div style="margin-bottom:2px;"><b>વિધાન (A):</b> ${renderMathInHtml(q.details.A)}</div>
+                    <div><b>કારણ (R):</b> ${renderMathInHtml(q.details.R)}</div>
                 </div>`;
                 await renderAndAppendChunk(assertHTML);
             } else if (q.type === 'two_statements') {
                 let twoStmtsHTML = `<div style="padding-left: 32px; font-size:16px; margin:2px 0; line-height:1.3;">
-                    <div style="margin-bottom:2px;"><b>વિધાન I:</b> ${q.details.stmt1}</div>
-                    <div><b>વિધાન II:</b> ${q.details.stmt2}</div>
+                    <div style="margin-bottom:2px;"><b>વિધાન I:</b> ${renderMathInHtml(q.details.stmt1)}</div>
+                    <div><b>વિધાન II:</b> ${renderMathInHtml(q.details.stmt2)}</div>
                 </div>`;
                 await renderAndAppendChunk(twoStmtsHTML);
             } else if (q.type === 'statement') {
                 if (q.details.stmts && q.details.stmts.length > 0) {
                     for (let sIdx = 0; sIdx < q.details.stmts.length; sIdx++) {
-                        let stmtRowHTML = `<div style="padding-left: 32px; font-size:16px; margin-bottom:2px; line-height:1.3;"><b>(${toRoman(sIdx + 1)})</b> ${q.details.stmts[sIdx]}</div>`;
+                        let stmtRowHTML = `<div style="padding-left: 32px; font-size:16px; margin-bottom:2px; line-height:1.3;"><b>(${toRoman(sIdx + 1)})</b> ${renderMathInHtml(q.details.stmts[sIdx])}</div>`;
                         await renderAndAppendChunk(stmtRowHTML);
                     }
                 }
                 if (q.details.bottomText) {
-                    let bTextHTML = `<div style="padding-left: 32px; font-size:16px; margin-top:2px;">${q.details.bottomText}</div>`;
+                    let bTextHTML = `<div style="padding-left: 32px; font-size:16px; margin-top:2px;">${renderMathInHtml(q.details.bottomText)}</div>`;
                     await renderAndAppendChunk(bTextHTML);
                 }
             }
@@ -2499,7 +2692,7 @@ CRITICAL RULES:
                         let optHTML = `<div style="padding-left: 32px; font-size:16px; margin-top:2px; line-height:1.25;">
                             <div style="display:flex; align-items:center;">
                                 <span style="min-width: 28px; display:inline-block; font-weight:bold; flex-shrink: 0;">(${o})</span>
-                                <div>${opt.text}</div>
+                                <div>${renderMathInHtml(opt.text)}</div>
                             </div>
                         </div>`;
                         await renderAndAppendChunk(optHTML);
