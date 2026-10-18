@@ -413,7 +413,6 @@
         .export-match-table th, .export-match-table td {
             border: 1.5px solid rgba(255, 255, 255, 0.4);
             padding: 10px 18px;
-            font-size: 30px;
             text-align: left;
             font-weight: 700;
             vertical-align: middle;
@@ -427,7 +426,6 @@
 
         .export-match-table th {
             background-color: rgba(255, 255, 255, 0.08);
-            font-size: 31px;
             font-weight: 700;
         }
 
@@ -977,7 +975,7 @@
 <div id="pngSettingsModal" class="modal-overlay">
     <div class="modal-card">
         <div class="modal-header">
-            <h3>🎨 16:9 PNG Colors, BG & Fonts <span class="badge">Press F4 to toggle</span></h3>
+            <h3>🎨 16:9 PNG Colors, BG, Fonts & Position <span class="badge">Press F4 to toggle</span></h3>
             <button class="btn btn-red btn-sm" onclick="closeModal('pngSettingsModal')">✖</button>
         </div>
         <div class="modal-body">
@@ -999,6 +997,17 @@
                 <label>16:9 બેકગ્રાઉન્ડ ઈમેજ અપલોડ કરો (Optional)</label>
                 <input type="file" id="bgUpload" accept="image/*" onchange="handleBgUpload(event)">
                 <span id="bgStatusText" style="font-size:11px; color:#64748b; margin-top:2px; display:block;">હાલમાં: Plain Solid Color Active</span>
+            </div>
+
+            <hr style="border:0; border-top:1px solid #e2e8f0; margin:8px 0;">
+            <h4 style="margin:0 0 6px 0; font-size:13px; color:#2563eb;">Position & Layout (Left / Right Movement):</h4>
+            <div class="form-group">
+                <label>Content Horizontal Position (Left Offset in px) - [Default: 200px]</label>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <input type="range" id="pngLeftOffsetRange" min="20" max="600" value="200" oninput="syncOffsetFromRange(this.value)" style="flex:1;">
+                    <input type="number" id="pngLeftOffset" value="200" min="20" max="600" oninput="syncOffsetFromInput(this.value)" style="width:80px;">
+                    <button type="button" class="btn btn-slate btn-sm" onclick="resetLeftOffset()">Default (200)</button>
+                </div>
             </div>
 
             <hr style="border:0; border-top:1px solid #e2e8f0; margin:8px 0;">
@@ -1308,6 +1317,26 @@
         });
     }
 
+    function syncOffsetFromRange(val) {
+        const inp = document.getElementById('pngLeftOffset');
+        if (inp) inp.value = val;
+        saveSettingsLocally();
+    }
+
+    function syncOffsetFromInput(val) {
+        const range = document.getElementById('pngLeftOffsetRange');
+        if (range) range.value = val;
+        saveSettingsLocally();
+    }
+
+    function resetLeftOffset() {
+        const range = document.getElementById('pngLeftOffsetRange');
+        const inp = document.getElementById('pngLeftOffset');
+        if (range) range.value = 200;
+        if (inp) inp.value = 200;
+        saveSettingsLocally();
+    }
+
     function syncColorWithHex(colorPickerId, hexInputId) {
         const picker = document.getElementById(colorPickerId);
         const hexInp = document.getElementById(hexInputId);
@@ -1407,6 +1436,7 @@
                 badgeBorderTextColor: document.getElementById('badgeBorderTextColor')?.value || '#ffffff',
                 badgeBgFillColor: document.getElementById('badgeBgFillColor')?.value || '#1976d2',
                 pngBgColor: document.getElementById('pngBgColor')?.value || '#0b0f19',
+                pngLeftOffset: document.getElementById('pngLeftOffset')?.value || '200',
                 geminiApiKey: document.getElementById('geminiApiKeyInput')?.value?.trim() || ''
             };
             localStorage.setItem('qb_settings', JSON.stringify(settings));
@@ -1458,6 +1488,11 @@
                 if (s.pngBgColor) {
                     document.getElementById('pngBgColor').value = s.pngBgColor;
                     document.getElementById('pngBgColorHex').value = s.pngBgColor.toUpperCase();
+                }
+                if (s.pngLeftOffset) {
+                    const offVal = s.pngLeftOffset;
+                    if (document.getElementById('pngLeftOffset')) document.getElementById('pngLeftOffset').value = offVal;
+                    if (document.getElementById('pngLeftOffsetRange')) document.getElementById('pngLeftOffsetRange').value = offVal;
                 }
                 if (s.geminiApiKey) {
                     document.getElementById('geminiApiKeyInput').value = s.geminiApiKey;
@@ -2318,6 +2353,10 @@ CRITICAL RULES:
         const qBadgeBgFill = document.getElementById('badgeBgFillColor')?.value || '#1976d2';
 
         const solidBgColor = document.getElementById('pngBgColor')?.value || '#0b0f19';
+        const leftOffset = document.getElementById('pngLeftOffset')?.value || '200';
+
+        // Apply Left Offset dynamically (Default 200px)
+        container.style.paddingLeft = `${leftOffset}px`;
 
         if (badgeEl) {
             badgeEl.style.backgroundColor = qBadgeBgFill;
@@ -2379,15 +2418,15 @@ CRITICAL RULES:
                 const head1 = q.details.title1 || 'Column - I';
                 const head2 = q.details.title2 || 'Column - II';
                 subContentHTML += `<table class="export-match-table" style="color:${qColor}; font-weight:700;">
-                    <thead><tr><th style="color:${qColor}; font-weight:700;">${head1}</th><th style="color:${qColor}; font-weight:700;">${head2}</th></tr></thead><tbody>`;
+                    <thead><tr><th style="color:${qColor}; font-weight:700; font-size:${qSize}px;">${head1}</th><th style="color:${qColor}; font-weight:700; font-size:${qSize}px;">${head2}</th></tr></thead><tbody>`;
                 const maxRows = Math.max(q.details.colA.length, q.details.colB.length);
                 for (let r = 0; r < maxRows; r++) {
                     const colBImg = (q.details.colBImgs && q.details.colBImgs[r]) ? q.details.colBImgs[r] : null;
                     subContentHTML += `<tr>
-                        <td style="color:${qColor}; font-weight:700;">${renderMathInHtml(q.details.colA[r] || '')}</td>
-                        <td style="color:${qColor}; font-weight:700;">
+                        <td style="color:${qColor}; font-weight:700; font-size:${qSize}px;">${renderMathInHtml(q.details.colA[r] || '')}</td>
+                        <td style="color:${qColor}; font-weight:700; font-size:${qSize}px;">
                             <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%;">
-                                <span style="flex:1; font-weight:700;">${renderMathInHtml(q.details.colB[r] || '')}</span>
+                                <span style="flex:1; font-weight:700; font-size:${qSize}px;">${renderMathInHtml(q.details.colB[r] || '')}</span>
                                 ${colBImg ? `<div class="colb-img-container" style="flex-shrink:0;"><img src="${colBImg}" style="max-height:85px; max-width:240px; object-fit:contain; display:block;"></div>` : ''}
                             </div>
                         </td>
