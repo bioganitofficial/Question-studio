@@ -705,7 +705,7 @@
             <!-- MOBILE QUICK-INSERT TOOLBAR -->
             <div class="mobile-quick-toolbar">
                 <span style="font-size:11px; font-weight:700; color:#64748b; margin-right:2px;">Quick:</span>
-                <button type="button" class="tb-chip" style="background:#fef3c7; color:#92400e; border-color:#fde68a;" onclick="quickInsertSymbol('\\frac{dN}{dt}')">dN/dt</button>
+                <button type="button" class="tb-chip" style="background:#fef3c7; color:#92400e; border-color:#fde68a;" onclick="quickInsertSymbol('\frac{dN}{dt}')">dN/dt</button>
                 <button type="button" class="tb-chip" style="background:#fef3c7; color:#92400e; border-color:#fde68a;" onclick="quickInsertFractionPrompt()">a/b (Frac)</button>
                 <button type="button" class="tb-chip" onclick="triggerMobileFormatTag('sub')">X₂ (Sub)</button>
                 <button type="button" class="tb-chip" onclick="triggerMobileFormatTag('sup')">X² (Sup)</button>
@@ -741,6 +741,7 @@
                         <option value="assertion">Assertion - Reason (વિધાન-કારણ)</option>
                         <option value="two_statements">વિધાન I અને II (Statements I & II)</option>
                         <option value="statement">Multiple Statements (બહુવિધ વિધાનો)</option>
+                        <option value="fill_blank">Fill in the Blanks / One Word (ખાલી જગ્યા / એક શબ્દ)</option>
                     </select>
                 </div>
             </div>
@@ -928,6 +929,15 @@
             <div class="form-group">
                 <label>ફૂટર Right</label>
                 <input type="text" id="pdfFooterRight" oninput="saveSettingsLocally()" placeholder="Page No">
+            </div>
+
+            <hr style="border:0; border-top:1px solid #e2e8f0; margin:8px 0;">
+            <h4 style="margin:0 0 6px 0; font-size:13px; color:#2563eb;">Question Type Inclusion Settings:</h4>
+            <div class="form-group" style="display:flex; align-items:center; gap:8px; background:#f8fafc; padding:8px 10px; border-radius:4px; border:1px solid #cbd5e1;">
+                <input type="checkbox" id="pdfIncludeFillBlanks" onchange="saveSettingsLocally()" style="width:17px; height:17px; cursor:pointer;">
+                <label for="pdfIncludeFillBlanks" style="margin:0; cursor:pointer; font-size:12px; font-weight:700; color:#1e293b;">
+                    Fill in the Blanks / One Word પ્રશ્નોને A4 PDF માં શામેલ કરો (Default: OFF)
+                </label>
             </div>
         </div>
         <div class="modal-footer">
@@ -1437,7 +1447,8 @@
                 badgeBgFillColor: document.getElementById('badgeBgFillColor')?.value || '#1976d2',
                 pngBgColor: document.getElementById('pngBgColor')?.value || '#0b0f19',
                 pngLeftOffset: document.getElementById('pngLeftOffset')?.value || '200',
-                geminiApiKey: document.getElementById('geminiApiKeyInput')?.value?.trim() || ''
+                geminiApiKey: document.getElementById('geminiApiKeyInput')?.value?.trim() || '',
+                pdfIncludeFillBlanks: document.getElementById('pdfIncludeFillBlanks')?.checked || false
             };
             localStorage.setItem('qb_settings', JSON.stringify(settings));
             updateBadgePreview();
@@ -1496,6 +1507,9 @@
                 }
                 if (s.geminiApiKey) {
                     document.getElementById('geminiApiKeyInput').value = s.geminiApiKey;
+                }
+                if (document.getElementById('pdfIncludeFillBlanks')) {
+                    document.getElementById('pdfIncludeFillBlanks').checked = !!s.pdfIncludeFillBlanks;
                 }
             } catch(e) {}
         }
@@ -1744,6 +1758,18 @@
         if (type === 'full_image') {
             optWrapper.style.display = 'none';
             return;
+        } else if (type === 'fill_blank') {
+            optWrapper.style.display = 'none';
+            dynamicDiv.innerHTML = `
+                <div class="form-group" style="background:#f8fafc; padding:8px 10px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom:6px;">
+                    <label style="font-weight:700; color:#1e293b; font-size:12px; margin-bottom:4px;">ઉત્તર / સાચો જવાબ (Answer / One Word - ફક્ત PNG માં દેખાશે):</label>
+                    <input type="text" id="blankAnswerInput" placeholder="અહીં સાચો ઉત્તર લખો (ઉદા. ભ્રૂણપોષ / 3.4 Å)...">
+                    <div style="font-size:11px; color:#64748b; margin-top:5px; font-weight:600;">
+                        ℹ️ નોંધ: આ પ્રકારના પ્રશ્નોને A4 PDF માં ઉમેરવા માટે <strong>F2 (PDF Settings)</strong> માં સેટિંગ આપેલ છે. PDF માં 'Answer:' પ્રિન્ટ થશે નહીં.
+                    </div>
+                </div>
+            `;
+            return;
         } else {
             optWrapper.style.display = 'block';
         }
@@ -1893,10 +1919,14 @@
                 stmts: Array.from(document.querySelectorAll('.stmt')).map(i => i.value.trim()).filter(v => v !== ""),
                 bottomText: bottomText
             };
+        } else if (type === 'fill_blank') {
+            details = {
+                answer: document.getElementById('blankAnswerInput')?.value.trim() || ''
+            };
         }
 
         let formattedOptions = {};
-        if (type !== 'full_image') {
+        if (type !== 'full_image' && type !== 'fill_blank') {
             ['1', '2', '3', '4'].forEach(opt => {
                 if (type === 'match') {
                     const boxContainer = document.getElementById(`optMatchBoxContainer_${opt}`);
@@ -2033,6 +2063,10 @@
                 const val = (q.options[opt]?.text) || (q.options[String.fromCharCode(64 + parseInt(opt))]?.text) || '';
                 if (document.getElementById(`optTxt_${opt}`)) document.getElementById(`optTxt_${opt}`).value = val;
             });
+        } else if (q.type === 'fill_blank') {
+            if (document.getElementById('blankAnswerInput')) {
+                document.getElementById('blankAnswerInput').value = q.details.answer || '';
+            }
         } else if (q.type !== 'full_image') {
             ['1', '2', '3', '4'].forEach(opt => {
                 const val = (q.options[opt]?.text) || (q.options[String.fromCharCode(64 + parseInt(opt))]?.text) || '';
@@ -2137,6 +2171,8 @@
             payload.col2Header = document.getElementById('col2Header')?.value.trim() || '';
             payload.colA = Array.from(document.querySelectorAll('.colA')).map(i => i.value.trim());
             payload.colB = Array.from(document.querySelectorAll('.colB')).map(i => i.value.trim());
+        } else if (type === 'fill_blank') {
+            payload.answer = document.getElementById('blankAnswerInput')?.value.trim() || '';
         }
 
         let opts = {};
@@ -2227,7 +2263,7 @@ CRITICAL RULES:
 
         // CURRENT ACTIVE MODELS LIST WITH MULTI-VERSION FALLBACK
         const candidateModels = [
-            'gemini-2.5-flash',
+            'gemini-3.8-flash',
             'gemini-2.0-flash',
             'gemini-2.0-flash-001',
             'gemini-flash-latest'
@@ -2316,6 +2352,10 @@ CRITICAL RULES:
                                 el.value = translated.options[optKey];
                             }
                         });
+                    }
+
+                    if (translated.answer && document.getElementById('blankAnswerInput')) {
+                        document.getElementById('blankAnswerInput').value = translated.answer;
                     }
 
                     success = true;
@@ -2412,6 +2452,19 @@ CRITICAL RULES:
                 ${optionsColumnHTML}
             </div>`;
         } 
+        else if (q.type === 'fill_blank') {
+            if (q.mainImg) {
+                const imgWidthPx = Math.round((1200 * (q.mainImgScale || 60)) / 100);
+                subContentHTML += `<div style="margin: 10px 0 20px 0; width: 100%; display: flex; justify-content: flex-start; align-items: center;">
+                    <img src="${q.mainImg}" style="max-height: 400px; width: ${imgWidthPx}px; object-fit: contain; border-radius:8px;">
+                </div>`;
+            }
+            const ansText = (q.details && q.details.answer) ? q.details.answer : '';
+            subContentHTML += `<div style="font-size:${optSize}px; color:${optColor}; font-weight:700; margin-top:45px; line-height:1.4;">
+                <span style="font-size:${optSize}px; color:${optColor}; font-weight:800;">Answer : </span>
+                <span style="font-size:${optSize}px; color:${optColor}; font-weight:700;">${renderMathInHtml(ansText)}</span>
+            </div>`;
+        }
         else {
             if (q.mainImg) {
                 const imgWidthPx = Math.round((1200 * (q.mainImgScale || 60)) / 100);
@@ -2570,7 +2623,19 @@ CRITICAL RULES:
     }
 
     async function generatePDFDoc() {
-        if (questionsArr.length === 0) { alert("PDF બનાવવા માટે પ્રશ્નો ઉમેરો!"); return null; }
+        // Filter questions: exclude fill_blank unless master toggle in F2 (PDF Settings) is enabled
+        const includeBlanksInPdf = document.getElementById('pdfIncludeFillBlanks')?.checked || false;
+        const pdfQuestions = questionsArr.filter(q => {
+            if (q.type === 'fill_blank') {
+                return includeBlanksInPdf;
+            }
+            return true;
+        });
+
+        if (pdfQuestions.length === 0) { 
+            alert("PDF બનાવવા માટે પ્રશ્નો ઉપલબ્ધ નથી! (જો ફક્ત Fill in the Blanks પ્રશ્નો હોય તો F2 PDF Settings માં જઈને ચાલુ કરો)"); 
+            return null; 
+        }
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
@@ -2728,8 +2793,8 @@ CRITICAL RULES:
             document.body.removeChild(tempDiv);
         }
 
-        for (let idx = 0; idx < questionsArr.length; idx++) {
-            const q = questionsArr[idx];
+        for (let idx = 0; idx < pdfQuestions.length; idx++) {
+            const q = pdfQuestions[idx];
             const displayNum = q.customNum ? q.customNum : `${idx + 1}`;
 
             const pyqPDF = q.pyq ? `<span style="font-size:12.5px; font-weight:700; color:#555; margin-left:auto; padding-left:6px; white-space:nowrap;">${q.pyq}</span>` : '';
@@ -2799,7 +2864,7 @@ CRITICAL RULES:
                 }
             }
 
-            if (q.type !== 'full_image') {
+            if (q.type !== 'full_image' && q.type !== 'fill_blank') {
                 for (let o of ['1', '2', '3', '4']) {
                     const opt = q.options[o] || q.options[String.fromCharCode(64 + parseInt(o))];
                     if (opt && opt.text) {
